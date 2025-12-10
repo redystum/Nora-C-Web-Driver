@@ -1,0 +1,23 @@
+package "webTester"
+version "1.0"
+
+#----------------------------
+# independent options
+#----------------------------
+# Mandatory option
+#option "folder" f "folder" string typestr="dirname" required
+#option "string" s "String to be processed" string typestr="string" required
+#option "letra" c "Character to be counted" string typestr="char" required
+#option "file" f "Input File" string typestr="filename" required
+
+# Optional
+#option "num" n "number" int optional
+
+#
+# NOTE: support for this file needs to be enabled in 'makefile'
+#
+
+
+
+option "gecko" g "geckodriver path" string typestr="filename" optional default="geckodriver"
+option "firefox" f "firefox path" string typestr="filename" optional default="firefox"
