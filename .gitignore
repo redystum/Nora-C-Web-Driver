@@ -1,0 +1,10 @@
+old/
+out/
+
+*.o
+
+.vscode/
+.fleet/
+
+geckodriver/
+webtest
