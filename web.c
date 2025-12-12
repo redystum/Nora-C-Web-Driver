@@ -8,11 +8,7 @@
 #include <time.h>
 #include <unistd.h>
 
-char *_gecko = "geckodriver";
-char *_firefox = "firefox";
-char _session_id[200];
-
-/* Add a small buffer wrapper so write_callback can append safely */
+/* small buffer wrapper so write_callback can append safely */
 #define RESPONSE_CAP 2048
 struct RespBuf {
 	char *buf;
@@ -20,9 +16,20 @@ struct RespBuf {
 	size_t len;
 };
 
-int gecko(char *command) {
+void reset_web_context(t_ctx* ctx) {
+	if (ctx->session_id) {
+		free(ctx->session_id);
+		ctx->session_id = NULL;
+	}
+	if (ctx->current_url) {
+		free(ctx->current_url);
+		ctx->current_url = NULL;
+	}
+}
+
+int gecko(t_ctx ctx, char *command) {
 	char *cmd = NULL;
-	ut_str_cat(&cmd, _gecko, " ", command, NULL);
+	ut_str_cat(&cmd, ctx.geckodriverPath, " ", command, NULL);
 	DEBUG("executing command: %s", cmd ? cmd : "(null)");
 	return system(cmd);
 }
@@ -105,8 +112,8 @@ void run_curl(char *path, char *data, char *response) {
 		free(url);
 }
 
-#define _rcs(path, data, response) run_curl_session(path, data, response)
-void run_curl_session(char *path, char *data, char *response) {
+#define _rcs(ctx, path, data, response) run_curl_session(ctx, path, data, response)
+void run_curl_session(t_ctx ctx, char *path, char *data, char *response) {
 	char *url = NULL;
 	char *p = NULL;
 	if (path && path[0] != '/') {
@@ -114,7 +121,7 @@ void run_curl_session(char *path, char *data, char *response) {
 		path = p;
 	}
 
-	ut_str_cat(&url, "/session/", _session_id, path, NULL);
+	ut_str_cat(&url, "/session/", ctx.session_id, path, NULL);
 	INFO("session_url='%s' data='%s'",
 	     url ? url : "(null)", data ? data : "(null)");
 	run_curl(url, data, response);
@@ -122,7 +129,7 @@ void run_curl_session(char *path, char *data, char *response) {
 		free(url);
 }
 
-int wait_for_gecko_ready(void) {
+int wait_for_gecko_ready(t_ctx* ctx) {
 	char response[2048] = { 0 };
 	int max_retries = 30;
 	int retry = 0;
@@ -143,8 +150,10 @@ int wait_for_gecko_ready(void) {
 			}
 			p = strchr(p, ':') + 2;
 			char *end = strchr(p, '"');
-			strncpy(_session_id, p, end - p);
-			_session_id[end - p] = 0;
+			char session_id[128];
+			strncpy(session_id, p, end - p);
+			session_id[end - p] = 0;
+			ctx->session_id = strdup(session_id);
 			return 0;
 		}
 		retry++;
@@ -158,57 +167,65 @@ int wait_for_gecko_ready(void) {
 	return -1;
 }
 
-int web_init(char *geckodriverPath, char *firefoxPath) {
+web_context web_init(char *geckodriverPath, char *firefoxPath) {
+	t_ctx ctx = {0};
 	if (geckodriverPath != NULL) {
-		_gecko = geckodriverPath;
+		ctx.geckodriverPath = geckodriverPath;
 	}
 	if (firefoxPath != NULL) {
-		_firefox = firefoxPath;
+		ctx.firefoxPath = firefoxPath;
 	}
 
 	char *command = NULL;
-	ut_str_cat(&command, "--port 9515 --binary ", _firefox,
+	ut_str_cat(&command, "--port 9515 --binary ", ctx.firefoxPath,
 		   " > /dev/null 2>&1 &", NULL);
 	DEBUG("starting geckodriver with command fragment: %s",
 	      command ? command : "(null)");
-	gecko(command);
 
-	int res = wait_for_gecko_ready();
+	if (gecko(ctx, command) < 0) {
+		DEBUG("Failed to start geckodriver");
+		reset_web_context(&ctx);
+		return ctx;
+	}
+	free(command);
 
-	if (res < 0) {
+	if (wait_for_gecko_ready(&ctx) < 0) {
 		DEBUG("Geckodriver failed to start");
-		return res;
+		reset_web_context(&ctx);
+		return ctx;
 	}
 
-	DEBUG("extracted session_id='%s'", _session_id);
+	DEBUG("extracted session_id='%s'", ctx.session_id);
 
-	return 0;
+	return ctx;
 }
 
-int web_open(char *link) {
+int web_open(web_context ctx, char *link) {
 	char response[2048] = { 0 };
 	char *data = NULL;
 	ut_str_cat(&data, "{\"url\": \"", link, "\"}", NULL);
 	DEBUG("opening link='%s' data='%s'", link ? link : "(null)",
 	      data ? data : "(null)");
-	_rcs("/url", data, response);
+	_rcs(ctx, "/url", data, response);
 	DEBUG("response (truncated): %.200s", response);
 	free(data);
 	return 0;
 }
 
-int web_close(void) {
-	DEBUG("closing session '%s'", _session_id);
+int web_close(web_context *ctx) {
+	DEBUG("closing session '%s'", ctx->session_id);
 	CURL *curl = curl_easy_init();
 
 	char endpoint[256];
-	sprintf(endpoint, "http://127.0.0.1:9515/session/%s", _session_id);
+	sprintf(endpoint, "http://127.0.0.1:9515/session/%s", ctx->session_id);
 	DEBUG("endpoint='%s'", endpoint);
 
 	curl_easy_setopt(curl, CURLOPT_URL, endpoint);
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
 	curl_easy_perform(curl);
 	curl_easy_cleanup(curl);
+
+	reset_web_context(ctx);
 
 	return 0;
 }

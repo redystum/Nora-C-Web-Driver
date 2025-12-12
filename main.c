@@ -4,6 +4,8 @@
 #include <stdio.h>
 #include "args.h"
 #include "web.h"
+
+
 int main(int argc, char *argv[]) {
 	struct gengetopt_args_info args;
 
@@ -15,15 +17,18 @@ int main(int argc, char *argv[]) {
 	char *gecko = args.gecko_arg;
 	char *firefox = args.firefox_arg;
 
+	printf("------\n");
 	printf("%s\n", gecko);
 	printf("%s\n", firefox);
+	printf("------\n");
 
-	int cenas = web_init(gecko, firefox);
 
-	web_open("http://www.example.com");
+	web_context ctx = web_init(gecko, firefox);
 
-	sleep(25);
+	web_open(ctx, "https://www.example.com");
 
-	web_close();
+	sleep(5);
+
+	web_close(&ctx);
 
 }

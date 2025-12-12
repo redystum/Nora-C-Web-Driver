@@ -39,7 +39,7 @@ $(PROGRAM): $(PROGRAM_OBJS)
 	$(CC) -o $@ $(PROGRAM_OBJS) $(LIBS) $(LDFLAGS)
 
 ## Dependencies
-main.o: main.c utils.h $(PROGRAM_OPT).h
+main.o: main.c utils.h web.h $(PROGRAM_OPT).h
 $(PROGRAM_OPT).o: $(PROGRAM_OPT).c $(PROGRAM_OPT).h
 
 utils.o: utils.c utils.h
