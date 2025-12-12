@@ -33,7 +33,7 @@
 #define DEBUG(...) debug(__FILE__, __LINE__, __func__, __VA_ARGS__)
 #else
 extern int verbose_enabled;
-#define DEBUG(...) if (verbose_enabled == 1) debug(__FILE__, __LINE__, __func__, __VA_ARGS__)
+#define DEBUG(...)
 #endif
 
 /*

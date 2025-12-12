@@ -5,6 +5,10 @@ out/
 
 .vscode/
 .fleet/
+.idea/
 
 geckodriver/
 webtest
+
+args.h
+args.c
