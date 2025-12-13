@@ -45,7 +45,7 @@ $(PROGRAM): $(PROGRAM_OBJS)
 
 ## Dependencies
 # object files now live in $(BUILD_DIR)
-$(BUILD_DIR)/main.o: main.c utils.h web.h $(PROGRAM_OPT).h
+$(BUILD_DIR)/main.o: main.c utils.h web/web.h $(PROGRAM_OPT).h
 	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c main.c -o $@
 
@@ -53,7 +53,7 @@ $(BUILD_DIR)/utils.o: utils.c utils.h
 	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c utils.c -o $@
 
-$(BUILD_DIR)/web.o: web.c web.h utils.h
+$(BUILD_DIR)/web/web.o: web/web.c web/web.h utils.h
 	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c web.c -o $@
 
