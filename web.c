@@ -21,10 +21,6 @@ void reset_web_context(t_ctx* ctx) {
 		free(ctx->session_id);
 		ctx->session_id = NULL;
 	}
-	if (ctx->current_url) {
-		free(ctx->current_url);
-		ctx->current_url = NULL;
-	}
 }
 
 int gecko(t_ctx ctx, int force_kill) {
@@ -234,6 +230,43 @@ int web_open(web_context ctx, char *link) {
 	DEBUG("response (truncated): %.200s", response);
 	free(data);
 	return 0;
+}
+
+int web_change_url(web_context ctx, char *link) {
+	char response[2048] = { 0 };
+	char *data = NULL;
+	ut_str_cat(&data, "{\"url\": \"", link, "\"}", NULL);
+	DEBUG("changing url to link='%s' data='%s'", link ? link : "(null)",
+	      data ? data : "(null)");
+	_rcs(ctx, "/url", data, response);
+	DEBUG("response (truncated): %.200s", response);
+	free(data);
+	return 0;
+}
+
+char* web_get_current_url(web_context ctx) {
+	char response[2048] = { 0 };
+	_rcs(ctx, "/url", NULL, response);
+	DEBUG("response (truncated): %.200s", response);
+
+	char *p = strstr(response, "\"value\":\"");
+	if (!p) {
+		DEBUG("current URL not found in response");
+		return NULL;
+	}
+	p += strlen("\"value\":\"");
+	char *end = strchr(p, '"');
+	if (!end) {
+		DEBUG("malformed response, no closing quote for URL");
+		return NULL;
+	}
+	size_t url_len = end - p;
+	char *current_url = (char *)malloc(url_len + 1);
+	strncpy(current_url, p, url_len);
+	current_url[url_len] = '\0';
+
+	DEBUG("extracted current_url='%s'", current_url);
+	return current_url;
 }
 
 int web_close(web_context *ctx) {

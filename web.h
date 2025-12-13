@@ -7,11 +7,12 @@ typedef struct {
 	char *geckodriverPath;
 	char *firefoxPath;
 	char *session_id;
-	char *current_url;
 } web_context;
 
 web_context web_init(char *geckodriverPath, char *firefoxPath, int port, int force_kill);
 int web_open(web_context ctx, char *link);
+int web_change_url(web_context ctx, char *link);
+char* web_get_current_url(web_context ctx);
 int web_close(web_context *ctx);
 
 #endif				// WEB_H

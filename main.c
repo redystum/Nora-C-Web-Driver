@@ -31,6 +31,14 @@ int main(int argc, char *argv[]) {
 
 	web_open(ctx, "https://www.example.com");
 
+	sleep(2);
+
+	char*  current_url = web_get_current_url(ctx);
+	printf("Current URL: %s\n", current_url);
+	free(current_url);
+
+	web_change_url(ctx, "https://www.wikipedia.org");
+
 	sleep(5);
 
 	web_close(&ctx);
