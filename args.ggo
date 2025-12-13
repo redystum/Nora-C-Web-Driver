@@ -21,3 +21,4 @@ version "1.0"
 
 option "gecko" g "geckodriver path" string typestr="filename" optional default="geckodriver"
 option "firefox" f "firefox path" string typestr="filename" optional default="firefox"
+option "port" p "port" int optional default="9515"

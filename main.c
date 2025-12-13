@@ -1,9 +1,11 @@
 #include <unistd.h>
+#include <signal.h>
 
 #include "utils.h"
 #include <stdio.h>
 #include "args.h"
 #include "web.h"
+
 
 
 int main(int argc, char *argv[]) {
@@ -16,14 +18,16 @@ int main(int argc, char *argv[]) {
 
 	char *gecko = args.gecko_arg;
 	char *firefox = args.firefox_arg;
+	int port = args.port_arg;
 
 	printf("------\n");
 	printf("%s\n", gecko);
 	printf("%s\n", firefox);
+	printf("%i\n", port);
 	printf("------\n");
 
 
-	web_context ctx = web_init(gecko, firefox);
+	web_context ctx = web_init(gecko, firefox, port, 1);
 
 	web_open(ctx, "https://www.example.com");
 

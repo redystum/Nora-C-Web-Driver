@@ -27,11 +27,27 @@ void reset_web_context(t_ctx* ctx) {
 	}
 }
 
-int gecko(t_ctx ctx, char *command) {
+int gecko(t_ctx ctx, int force_kill) {
+	if (force_kill) {
+		char kill_cmd[256];
+		sprintf(kill_cmd, "fuser -k -n tcp %d > /dev/null 2>&1", ctx.port);
+		int res = system(kill_cmd);
+		DEBUG("killed existing geckodriver on port %d, res=%d",
+		      ctx.port, res);
+		sleep(1);
+	}
 	char *cmd = NULL;
+
+	char command[1024];
+	sprintf(command, "--port %d --binary %s > /dev/null 2>&1 &", ctx.port, ctx.firefoxPath);
+	DEBUG("starting geckodriver with command fragment: %s", command);
+
 	ut_str_cat(&cmd, ctx.geckodriverPath, " ", command, NULL);
 	DEBUG("executing command: %s", cmd ? cmd : "(null)");
-	return system(cmd);
+	int res = system(cmd);
+	DEBUG("geckodriver start command returned %d", res);
+	if (cmd) free(cmd);
+	return res;
 }
 
 static size_t write_callback(void *ptr, size_t size, size_t nmemb,
@@ -56,7 +72,7 @@ static size_t write_callback(void *ptr, size_t size, size_t nmemb,
 	return total;
 }
 
-void run_curl(char *path, char *data, char *response) {
+void run_curl(t_ctx ctx, char *path, char *data, char *response) {
 	DEBUG("path='%s' data='%s'", path ? path : "(null)",
 	      data ? data : "(null)");
 	CURL *curl = curl_easy_init();
@@ -65,17 +81,17 @@ void run_curl(char *path, char *data, char *response) {
 		return;
 	}
 
-	char *url = NULL;
+	char url[1024] = { 0 };
 	if (path && path[0] == '/') {
-		ut_str_cat(&url, "http://127.0.0.1:9515", path, NULL);
+		DEBUG("path starts with /");
+		sprintf(url, "http://127.0.0.1:%d%s", ctx.port, path);
 	} else if (path) {
-		ut_str_cat(&url, "http://127.0.0.1:9515/", path, NULL);
+		DEBUG("path does not start with /");
+		sprintf(url, "http://127.0.0.1:%d/%s", ctx.port, path);
 	}
-
-	DEBUG("url='%s'", url ? url : "(null)");
+	DEBUG("url='%s'", url);
 
 	curl_easy_setopt(curl, CURLOPT_URL, url);
-	// Set content type to application/json
 	struct curl_slist *headers = NULL;
 	headers = curl_slist_append(headers, "Content-Type: application/json");
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
@@ -108,8 +124,6 @@ void run_curl(char *path, char *data, char *response) {
 		      response ? response : "(null)");
 	}
 	curl_easy_cleanup(curl);
-	if (url)
-		free(url);
 }
 
 #define _rcs(ctx, path, data, response) run_curl_session(ctx, path, data, response)
@@ -124,7 +138,7 @@ void run_curl_session(t_ctx ctx, char *path, char *data, char *response) {
 	ut_str_cat(&url, "/session/", ctx.session_id, path, NULL);
 	INFO("session_url='%s' data='%s'",
 	     url ? url : "(null)", data ? data : "(null)");
-	run_curl(url, data, response);
+	run_curl(ctx, url, data, response);
 	if (url)
 		free(url);
 }
@@ -137,7 +151,7 @@ int wait_for_gecko_ready(t_ctx* ctx) {
 	while (retry < max_retries) {
 		sleep(1);
 		memset(response, 0, sizeof(response));
-		run_curl("/session",
+		run_curl(*ctx, "/session",
 			 "{\"capabilities\": {\"alwaysMatch\": {\"browserName\": \"firefox\"}}}",
 			 response);
 
@@ -167,27 +181,37 @@ int wait_for_gecko_ready(t_ctx* ctx) {
 	return -1;
 }
 
-web_context web_init(char *geckodriverPath, char *firefoxPath) {
+/**
+ * \brief Initialize web context
+ * \param geckodriverPath NULL = "geckodriver"
+ * \param firefoxPath NULL = "firefox"
+ * \param port 0 = 9515
+ * \param force_kill 1 = kill existing geckodriver on port
+ * \return
+ */
+web_context web_init(char *geckodriverPath, char *firefoxPath, int port, int force_kill) {
 	t_ctx ctx = {0};
 	if (geckodriverPath != NULL) {
 		ctx.geckodriverPath = geckodriverPath;
+	} else {
+		ctx.geckodriverPath = "geckodriver";
 	}
 	if (firefoxPath != NULL) {
 		ctx.firefoxPath = firefoxPath;
+	} else {
+		ctx.firefoxPath = "firefox";
+	}
+	if (port != 0) {
+		ctx.port = port;
+	} else {
+		ctx.port = 9515;
 	}
 
-	char *command = NULL;
-	ut_str_cat(&command, "--port 9515 --binary ", ctx.firefoxPath,
-		   " > /dev/null 2>&1 &", NULL);
-	DEBUG("starting geckodriver with command fragment: %s",
-	      command ? command : "(null)");
-
-	if (gecko(ctx, command) < 0) {
+	if (gecko(ctx, force_kill) < 0) {
 		DEBUG("Failed to start geckodriver");
 		reset_web_context(&ctx);
 		return ctx;
 	}
-	free(command);
 
 	if (wait_for_gecko_ready(&ctx) < 0) {
 		DEBUG("Geckodriver failed to start");
@@ -217,7 +241,7 @@ int web_close(web_context *ctx) {
 	CURL *curl = curl_easy_init();
 
 	char endpoint[256];
-	sprintf(endpoint, "http://127.0.0.1:9515/session/%s", ctx->session_id);
+	sprintf(endpoint, "http://127.0.0.1:%d/session/%s", ctx->port, ctx->session_id);
 	DEBUG("endpoint='%s'", endpoint);
 
 	curl_easy_setopt(curl, CURLOPT_URL, endpoint);
