@@ -20,7 +20,7 @@ PROGRAM=$(BUILD_DIR)/$(PROGRAM_NAME)
 PROGRAM_OPT=args
 
 ## Object files required to build the executable (now in build/)
-PROGRAM_OBJS=$(addprefix $(BUILD_DIR)/, main.o utils.o web.o $(PROGRAM_OPT).o)
+PROGRAM_OBJS=$(addprefix $(BUILD_DIR)/, main.o utils.o web.o gecko.o getters.o requests.o web_utils.o $(PROGRAM_OPT).o)
 
 # Clean and all are not files
 .PHONY: clean all docs indent debugon
@@ -53,9 +53,10 @@ $(BUILD_DIR)/utils.o: utils.c utils.h
 	mkdir -p $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c utils.c -o $@
 
-$(BUILD_DIR)/web/web.o: web/web.c web/web.h utils.h
+# Rule for files in web/ directory
+$(BUILD_DIR)/%.o: web/%.c
 	mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c web.c -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 # disable warnings from gengetopt generated files (object also in build/)
 $(BUILD_DIR)/$(PROGRAM_OPT).o: $(PROGRAM_OPT).c $(PROGRAM_OPT).h

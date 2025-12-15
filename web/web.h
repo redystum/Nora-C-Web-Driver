@@ -22,8 +22,9 @@ web_context web_init(char *geckodriverPath, char *firefoxPath, int port, int for
 int web_open(web_context ctx, char *link);
 int web_change_url(web_context ctx, char *link);
 char* web_get_current_url(web_context ctx);
+int wait_to_page_load(web_context ctx, int max_wait_seconds);
 int web_close(web_context *ctx);
-
+int web_usleep(int microseconds);
 
 // privates
 
@@ -35,7 +36,7 @@ struct RespBuf {
 	size_t len;
 };
 
-static size_t _write_callback(void *ptr, size_t size, size_t nmemb, void *userdata);
+size_t _write_callback(void *ptr, size_t size, size_t nmemb, void *userdata);
 void _run_curl(t_ctx ctx, char *path, char *data, char *response);
 #define _rcs(ctx, path, data, response) _run_curl_session(ctx, path, data, response)
 void _run_curl_session(t_ctx ctx, char *path, char *data, char *response);

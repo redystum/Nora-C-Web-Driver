@@ -33,11 +33,14 @@ int main(int argc, char *argv[]) {
 
 	sleep(2);
 
+	web_change_url(ctx, "https://the-internet.herokuapp.com/dynamic_loading/2");
+
+	wait_to_page_load(ctx, 0);
+
 	char*  current_url = web_get_current_url(ctx);
 	printf("Current URL: %s\n", current_url);
-	free(current_url);
 
-	web_change_url(ctx, "https://www.wikipedia.org");
+	free(current_url);
 
 	sleep(5);
 

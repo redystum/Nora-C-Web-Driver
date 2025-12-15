@@ -90,6 +90,28 @@ int web_change_url(web_context ctx, char *link) {
 	free(data);
 	return 0;
 }
+/**
+ * \brief Wait until page is loaded
+ * \param ctx web context
+ * \param max_wait_seconds 0=unlimited
+ * \return 0=ok, -1=timeout
+ */
+int wait_to_page_load(web_context ctx, int max_wait_seconds) {
+	int waited = 0;
+	max_wait_seconds = max_wait_seconds * 2; // .5 second intervals
+	if (max_wait_seconds == 0) max_wait_seconds = INT_MAX;
+	while (waited < max_wait_seconds) {
+		char *current_url = web_get_current_url(ctx);
+		if (current_url != NULL && strlen(current_url) > 0) {
+			free(current_url);
+			return 0; // Page loaded
+		}
+		free(current_url);
+		web_usleep(500000); // 0.5 second
+		waited++;
+	}
+	return -1; // Timeout
+}
 
 /**
  * \brief Close web session

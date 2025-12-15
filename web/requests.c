@@ -1,6 +1,6 @@
 #include "web.h"
 
-static size_t _write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
+size_t _write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
 	size_t total = size * nmemb;
 	struct RespBuf *rb = (struct RespBuf *)userdata;
 	if (!rb || !rb->buf) {
@@ -84,7 +84,7 @@ void _run_curl_session(t_ctx ctx, char *path, char *data, char *response) {
 	}
 
 	ut_str_cat(&url, "/session/", ctx.session_id, path, NULL);
-	INFO("session_url='%s' data='%s'",
+	DEBUG("session_url='%s' data='%s'",
 	     url ? url : "(null)", data ? data : "(null)");
 	_run_curl(ctx, url, data, response);
 	if (url)
