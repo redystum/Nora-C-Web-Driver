@@ -1,78 +1,87 @@
-# Libraries to include (if any)
+# Libraries
 LIBS=-lcurl #-lm -pthread
 
 # Compiler flags
-CFLAGS=-Wall -Wextra -ggdb -std=c11 -pedantic -D_POSIX_C_SOURCE=200809L -Werror=vla #-pg
+# Added -I./src so you can include headers easily (e.g., #include "core/web_core.h")
+CFLAGS=-Wall -Wextra -ggdb -std=c11 -pedantic -D_POSIX_C_SOURCE=200809L -Werror=vla -I./src
 
 # Linker flags
-LDFLAGS=#-pg
+LDFLAGS=
 
 # Indentation flags
-# IFLAGS=-br -brs -brf -npsl -ce -cli4 -bli4 -nut
 IFLAGS=-linux -brs -brf -br
 
-## Name of the executable
+## Program Definitions
 PROGRAM_NAME=webtest
 BUILD_DIR=build
 PROGRAM=$(BUILD_DIR)/$(PROGRAM_NAME)
-
-# Prefix for the gengetopt file (if gengetopt is used)
 PROGRAM_OPT=args
 
-## Object files required to build the executable (now in build/)
-PROGRAM_OBJS=$(addprefix $(BUILD_DIR)/, main.o utils.o web.o gecko.o getters.o requests.o web_utils.o $(PROGRAM_OPT).o)
+# --------------------------------------------------------------------------
+# AUTOMATIC FILE DISCOVERY
+# --------------------------------------------------------------------------
 
-# Clean and all are not files
+# 1. Find all .c files inside src/ and its subdirectories (core, element, etc.)
+MODULE_SRCS := $(wildcard src/*/*.c)
+
+# 2. Define the Main sources (root directory files)
+MAIN_SRCS := main.c $(PROGRAM_OPT).c
+
+# 3. Combine them
+ALL_SRCS := $(MAIN_SRCS) $(MODULE_SRCS)
+
+# 4. Convert .c filenames to .o filenames inside the BUILD_DIR
+#    Example: src/core/web_core.c -> build/src/core/web_core.o
+PROGRAM_OBJS := $(patsubst %.c, $(BUILD_DIR)/%.o, $(ALL_SRCS))
+
+# Ensure args.h is generated before compiling any object file
+$(PROGRAM_OBJS): $(PROGRAM_OPT).h
+
+# --------------------------------------------------------------------------
+# TARGETS
+# --------------------------------------------------------------------------
+
 .PHONY: clean all docs indent debugon
 
 all: $(PROGRAM)
 
-# activate DEBUG, defining the SHOW_DEBUG macro
+# Debug build
 debugon: CFLAGS += -D DEBUG_ENABLED -g
 debugon: $(PROGRAM)
 
-all_debugon: debugon all
-
-# activate optimization (-O...)
-OPTIMIZE_FLAGS=-O2 # possible values (for gcc): -O2 -O3 -Os -Ofast
+# Optimization
+OPTIMIZE_FLAGS=-O2
 optimize: CFLAGS += $(OPTIMIZE_FLAGS)
 optimize: LDFLAGS += $(OPTIMIZE_FLAGS)
 optimize: $(PROGRAM)
 
+# Linking the executable
 $(PROGRAM): $(PROGRAM_OBJS)
-	mkdir -p $(BUILD_DIR)
+	@mkdir -p $(BUILD_DIR)
 	$(CC) -o $@ $(PROGRAM_OBJS) $(LIBS) $(LDFLAGS)
+	@echo "Build successful: $(PROGRAM)"
 
-## Dependencies
-# object files now live in $(BUILD_DIR)
-$(BUILD_DIR)/main.o: main.c utils.h web/web.h $(PROGRAM_OPT).h
-	mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c main.c -o $@
+# --------------------------------------------------------------------------
+# COMPILATION RULES
+# --------------------------------------------------------------------------
 
-$(BUILD_DIR)/utils.o: utils.c utils.h
-	mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c utils.c -o $@
-
-# Rule for files in web/ directory
-$(BUILD_DIR)/%.o: web/%.c
-	mkdir -p $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# disable warnings from gengetopt generated files (object also in build/)
+# 1. Rule for gengetopt file (specific flags)
 $(BUILD_DIR)/$(PROGRAM_OPT).o: $(PROGRAM_OPT).c $(PROGRAM_OPT).h
-	mkdir -p $(BUILD_DIR)
+	@mkdir -p $(dir $@)
 	$(CC) -ggdb -std=c11 -pedantic -c $(PROGRAM_OPT).c -o $@
 
-# generic rule: any other .c → build/%.o
+# 2. GENERIC MAGIC RULE
+#    This handles main.c, utils.c, AND any file deep inside src/
+#    $(dir $@) ensures the folder (e.g., build/src/window/) exists before compiling
 $(BUILD_DIR)/%.o: %.c
-	mkdir -p $(BUILD_DIR)
+	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-#how to create an object file (.o) from C file (.c)
-.c.o:
-	$(CC) $(CFLAGS) -c $<
+# --------------------------------------------------------------------------
+# UTILITIES
+# --------------------------------------------------------------------------
 
-# Generates command line arguments code from gengetopt configuration file
+# Generate gengetopt files
 $(PROGRAM_OPT).c $(PROGRAM_OPT).h: $(PROGRAM_OPT).ggo
 	gengetopt < $(PROGRAM_OPT).ggo --file-name=$(PROGRAM_OPT)
 
@@ -83,33 +92,19 @@ clean:
 docs: Doxyfile
 	doxygen Doxyfile
 
-Doxyfile:
-	doxygen -g Doxyfile
-
-# entry to create the list of dependencies
 depend:
-	$(CC) -MM *.c
+	$(CC) $(CFLAGS) -MM $(ALL_SRCS)
 
 indent:
-	indent $(IFLAGS) *.c *.h && rm -f *~
+	indent $(IFLAGS) $(ALL_SRCS) *.h src/*/*.h && rm -f *~ src/*/*~
 
-# entry to run the pmccabe utility (computes the "complexity" of the code)
 pmccabe:
-	pmccabe -v *.c
+	pmccabe -v $(ALL_SRCS)
 
-# entry to run the cppcheck tool
 cppcheck:
-	cppcheck --enable=all --verbose --suppress=missingIncludeSystem *.c *.h
-
+	cppcheck --enable=all --verbose --suppress=missingIncludeSystem $(ALL_SRCS) src/*/*.h
 
 run: $(PROGRAM)
 	./$(PROGRAM) -g ./geckodriver/geckodriver -f /opt/firefox/firefox
-	
-# verbose: $(PROGRAM)
-# 	./$(PROGRAM) --verbose
 
-# build: $(PROGRAM)
-# 	./$(PROGRAM) -i main.lance -o generated -a -f -r
-
-# debug: $(PROGRAM)
-# 	valgrind --leak-check=full --track-origins=yes --show-leak-kinds=all --suppressions=valgrind.supp ./$(PROGRAM) -i main.lance -o generated
+all_debugon: debugon all

@@ -1,0 +1,22 @@
+#ifndef COMMUNICATION_H
+#define COMMUNICATION_H
+
+#include <stddef.h>
+#include "../core/core.h"
+
+/* small buffer wrapper so write_callback can append safely */
+#define RESPONSE_CAP 2048
+struct _RespBuf {
+	char *buf;
+	size_t cap;
+	size_t len;
+};
+
+size_t _write_callback(void *ptr, size_t size, size_t nmemb, void *userdata);
+void _run_curl(t_ctx ctx, char *path, char *data, char *response);
+#define _rcs(ctx, path, data, response) _run_curl_session(ctx, path, data, response)
+void _run_curl_session(t_ctx ctx, char *path, char *data, char *response);
+int _gecko_run(t_ctx ctx, int force_kill);
+int _wait_for_gecko_ready(t_ctx * ctx);
+
+#endif				// COMMUNICATION_H
