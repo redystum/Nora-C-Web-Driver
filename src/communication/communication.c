@@ -22,7 +22,7 @@ size_t _write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
     return total;
 }
 
-void _run_curl(t_ctx ctx, char *path, char *data, char *response) {
+void _run_curl(t_ctx ctx, char *path, char *data, char *response, t_mth method) {
     DEBUG("path='%s' data='%s'", path ? path : "(null)",
           data ? data : "(null)");
     CURL *curl = curl_easy_init();
@@ -46,8 +46,25 @@ void _run_curl(t_ctx ctx, char *path, char *data, char *response) {
     headers = curl_slist_append(headers, "Content-Type: application/json");
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
 
-    if (data != NULL) {
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60L);
+
+    if (method == POST) {
+        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+        if (data != NULL) {
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
+        } else {
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "{}");
+        }
+    } else if (method == DELETE) {
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
+        if (data != NULL) {
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
+        } else {
+            curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "{}");
+        }
+    } else { // Default to GET
+        DEBUG("setting method to GET");
+        curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
     }
 
     /* prepare safe response buffer wrapper */
@@ -76,7 +93,7 @@ void _run_curl(t_ctx ctx, char *path, char *data, char *response) {
     curl_easy_cleanup(curl);
 }
 
-void _run_curl_session(t_ctx ctx, char *path, char *data, char *response) {
+void _run_curl_session(t_ctx ctx, char *path, char *data, char *response, t_mth method) {
     char url[2048];
     char p[1024];
     if (path && path[0] != '/') {
@@ -87,12 +104,12 @@ void _run_curl_session(t_ctx ctx, char *path, char *data, char *response) {
     sprintf(url, "/session/%s%s", ctx.session_id, path ? path : "");
     DEBUG("session_url='%s' data='%s'",
           url ? url : "(null)", data ? data : "(null)");
-    _run_curl(ctx, url, data, response);
+    _run_curl(ctx, url, data, response, method);
 }
 
 int _gecko_run(t_ctx ctx, int force_kill) {
     if (force_kill) {
-        char kill_cmd[256];
+        char kill_cmd[256] = {0};
         sprintf(kill_cmd, "fuser -k -n tcp %d > /dev/null 2>&1", ctx.port);
         int res = system(kill_cmd);
         DEBUG("killed existing geckodriver on port %d, res=%d",
@@ -100,8 +117,8 @@ int _gecko_run(t_ctx ctx, int force_kill) {
         sleep(1);
     }
 
-    char cmd[2048];
-    char command[1024];
+    char cmd[2048] = {0};
+    char command[1024] = {0};
     sprintf(command, "--port %d --binary %s > /dev/null 2>&1 &", ctx.port, ctx.firefoxPath);
     DEBUG("starting geckodriver with command fragment: %s", command);
 
@@ -122,7 +139,7 @@ int _wait_for_gecko_ready(t_ctx *ctx) {
         memset(response, 0, sizeof(response));
         _run_curl(*ctx, "/session",
                   "{\"capabilities\": {\"alwaysMatch\": {\"browserName\": \"firefox\"}}}",
-                  response);
+                  response, POST);
 
         char *p = strstr(response, "\"sessionId\"");
         if (p != NULL) {
@@ -133,7 +150,7 @@ int _wait_for_gecko_ready(t_ctx *ctx) {
             }
             p = strchr(p, ':') + 2;
             char *end = strchr(p, '"');
-            char session_id[128];
+            char session_id[128] = {0};
             strncpy(session_id, p, end - p);
             session_id[end - p] = 0;
             ctx->session_id = strdup(session_id);
