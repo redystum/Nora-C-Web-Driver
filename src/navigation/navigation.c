@@ -9,13 +9,13 @@
  * \return 0=ok
  */
 int web_navigate_to(web_context ctx, char *url) {
-    char response[2048] = {0};
+    cJSON *response_json = NULL;
     char data[2048] = {0};
     sprintf(data, "{\"url\": \"%s\"}", url);
     DEBUG("changing url to link='%s' data='%s'", url ? url : "(null)",
           data ? data : "(null)");
-    _rcs(ctx, "/url", data, response, POST);
-    DEBUG("response (truncated): %.200s", response);
+    _rcs(ctx, "/url", data, &response_json, POST);
+    DEBUG("response (truncated): %.200s", response_json);
     return 0;
 }
 
@@ -48,25 +48,18 @@ int wait_to_page_load(web_context ctx, int max_wait_seconds) {
  * \return current URL (as a pointer)
  */
 char *web_get_url(web_context ctx) {
-    char response[2048] = {0};
-    _rcs(ctx, "/url", NULL, response, GET);
-    DEBUG("response (truncated): %.200s", response);
+    cJSON *response_json = NULL;
+    _rcs(ctx, "/url", NULL, &response_json, GET);
+    DEBUG("response (truncated): %.200s", response_json);
 
-    char *p = strstr(response, "\"value\":\"");
-    if (!p) {
+    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+    if (!cJSON_IsString(value) || (value->valuestring == NULL)) {
         DEBUG("current URL not found in response");
+        cJSON_Delete(response_json);
         return NULL;
     }
-    p += strlen("\"value\":\"");
-    char *end = strchr(p, '"');
-    if (!end) {
-        DEBUG("malformed response, no closing quote for URL");
-        return NULL;
-    }
-    size_t url_len = end - p;
-    char *current_url = (char *) malloc(url_len + 1);
-    strncpy(current_url, p, url_len);
-    current_url[url_len] = '\0';
+    char *current_url = strdup(value->valuestring);
+    cJSON_Delete(response_json);
 
     DEBUG("extracted current_url='%s'", current_url);
     return current_url;
@@ -78,9 +71,9 @@ char *web_get_url(web_context ctx) {
  * \return 0=ok
  */
 int web_back(web_context ctx) {
-    char response[2048] = {0};
-    _rcs(ctx, "/back", NULL, response, POST);
-    DEBUG("response (truncated): %.200s", response);
+    cJSON *response_json = NULL;
+    _rcs(ctx, "/back", NULL, &response_json, POST);
+    DEBUG("response (truncated): %.200s", response_json);
     return 0;
 }
 
@@ -90,9 +83,9 @@ int web_back(web_context ctx) {
  * \return 0=ok
  */
 int web_forward(web_context ctx) {
-    char response[2048] = {0};
-    _rcs(ctx, "/forward", NULL, response, POST);
-    DEBUG("response (truncated): %.200s", response);
+    cJSON *response_json = NULL;
+    _rcs(ctx, "/forward", NULL, &response_json, POST);
+    DEBUG("response (truncated): %.200s", response_json);
     return 0;
 }
 
@@ -102,9 +95,9 @@ int web_forward(web_context ctx) {
  * \return 0=ok
  */
 int web_refresh(web_context ctx) {
-    char response[2048] = {0};
-    _rcs(ctx, "/refresh", NULL, response, POST);
-    DEBUG("response (truncated): %.200s", response);
+    cJSON *response_json = NULL;
+    _rcs(ctx, "/refresh", NULL, &response_json, POST);
+    DEBUG("response (truncated): %.200s", response_json);
     return 0;
 }
 
@@ -114,25 +107,18 @@ int web_refresh(web_context ctx) {
  * \return current page title (as a pointer)
  */
 char *web_get_title(web_context ctx) {
-    char response[2048] = {0};
-    _rcs(ctx, "/title", NULL, response, GET);
-    DEBUG("response (truncated): %.200s", response);
+    cJSON *response_json = NULL;
+    _rcs(ctx, "/title", NULL, &response_json, GET);
+    DEBUG("response (truncated): %.200s", response_json);
 
-    char *p = strstr(response, "\"value\":\"");
-    if (!p) {
+    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+    if (!cJSON_IsString(value) || (value->valuestring == NULL)) {
         DEBUG("page title not found in response");
+        cJSON_Delete(response_json);
         return NULL;
     }
-    p += strlen("\"value\":\"");
-    char *end = strchr(p, '"');
-    if (!end) {
-        DEBUG("malformed response, no closing quote for title");
-        return NULL;
-    }
-    size_t title_len = end - p;
-    char *title = (char *) malloc(title_len + 1);
-    strncpy(title, p, title_len);
-    title[title_len] = '\0';
+    char *title = strdup(value->valuestring);
+    cJSON_Delete(response_json);
 
     DEBUG("extracted title='%s'", title);
     return title;

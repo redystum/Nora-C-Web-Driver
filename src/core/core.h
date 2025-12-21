@@ -8,6 +8,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <cjson/cJSON.h>
 
 #include "../utils/utils.h"
 

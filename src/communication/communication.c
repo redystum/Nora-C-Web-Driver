@@ -22,7 +22,7 @@ size_t _write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
     return total;
 }
 
-void _run_curl(t_ctx ctx, char *path, char *data, char *response, t_mth method) {
+void _run_curl(t_ctx ctx, char *path, char *data, cJSON **response_json, t_mth method) {
     DEBUG("path='%s' data='%s'", path ? path : "(null)",
           data ? data : "(null)");
     CURL *curl = curl_easy_init();
@@ -68,17 +68,11 @@ void _run_curl(t_ctx ctx, char *path, char *data, char *response, t_mth method) 
     }
 
     /* prepare safe response buffer wrapper */
+    char raw_buf[RESPONSE_CAP] = {0};
     struct _RespBuf rb;
-    rb.buf = response;
+    rb.buf = raw_buf;
     rb.cap = RESPONSE_CAP;
-    /* ensure existing response buffer is NUL-terminated and track current length
-     */
-    if (response) {
-        response[rb.cap - 1] = '\0';
-        rb.len = strlen(response);
-    } else {
-        rb.len = 0;
-    }
+    rb.len = 0;
 
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &rb);
@@ -87,13 +81,15 @@ void _run_curl(t_ctx ctx, char *path, char *data, char *response, t_mth method) 
     if (res != CURLE_OK) {
         DEBUG("curl_easy_perform failed: %s", curl_easy_strerror(res));
     } else {
-        DEBUG("request OK, response (truncated): %.200s",
-              response ? response : "(null)");
+        DEBUG("request OK, response (truncated): %.200s", raw_buf);
+        if (response_json) {
+            *response_json = cJSON_Parse(raw_buf);
+        }
     }
     curl_easy_cleanup(curl);
 }
 
-void _run_curl_session(t_ctx ctx, char *path, char *data, char *response, t_mth method) {
+void _run_curl_session(t_ctx ctx, char *path, char *data, cJSON **response, t_mth method) {
     char url[2048];
     char p[1024];
     if (path && path[0] != '/') {
@@ -130,31 +126,28 @@ int _gecko_run(t_ctx ctx, int force_kill) {
 }
 
 int _wait_for_gecko_ready(t_ctx *ctx) {
-    char response[2048] = {0};
+    cJSON *response = NULL;
     int max_retries = 30;
     int retry = 0;
 
     while (retry < max_retries) {
         sleep(1);
-        memset(response, 0, sizeof(response));
+        if (response) cJSON_Delete(response);
+        response = NULL;
+
         _run_curl(*ctx, "/session",
                   "{\"capabilities\": {\"alwaysMatch\": {\"browserName\": \"firefox\"}}}",
-                  response, POST);
+                  &response, POST);
 
-        char *p = strstr(response, "\"sessionId\"");
-        if (p != NULL) {
-            DEBUG("geckodriver is ready");
-            if (!p) {
-                DEBUG("sessionId not found in response");
-                return -2;
+        if (response) {
+            cJSON *val = cJSON_GetObjectItem(response, "value");
+            cJSON *sess = cJSON_GetObjectItem(val, "sessionId");
+            if (cJSON_IsString(sess) && sess->valuestring) {
+                DEBUG("geckodriver is ready");
+                ctx->session_id = strdup(sess->valuestring);
+                cJSON_Delete(response);
+                return 0;
             }
-            p = strchr(p, ':') + 2;
-            char *end = strchr(p, '"');
-            char session_id[128] = {0};
-            strncpy(session_id, p, end - p);
-            session_id[end - p] = 0;
-            ctx->session_id = strdup(session_id);
-            return 0;
         }
         retry++;
         DEBUG("geckodriver not ready yet, retry %d/%d",
@@ -163,6 +156,7 @@ int _wait_for_gecko_ready(t_ctx *ctx) {
         sleep(1);
     }
 
+    if (response) cJSON_Delete(response);
     DEBUG("geckodriver failed to start after %d attempts", max_retries);
     return -1;
 }

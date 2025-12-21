@@ -1,5 +1,5 @@
 # Libraries
-LIBS=-lcurl #-lm -pthread
+LIBS=-lcurl -lcjson #-lm -pthread
 
 # Compiler flags
 # Added -I./src so you can include headers easily (e.g., #include "core/web_core.h")
@@ -108,3 +108,10 @@ run: $(PROGRAM)
 	./$(PROGRAM) -g ./geckodriver/geckodriver -f /opt/firefox/firefox
 
 all_debugon: debugon all
+
+gecko:
+	./geckodriver/geckodriver --port 9515 --binary /opt/firefox/firefox
+test_firefox:
+	curl -X POST http://127.0.0.1:9515/session \
+         -H "Content-Type: application/json" \
+         -d '{"capabilities": {"alwaysMatch": {"browserName": "firefox"}}}'
