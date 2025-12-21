@@ -25,5 +25,6 @@ void _run_curl(t_ctx ctx, char *path, char *data, cJSON **response_json, t_mth m
 void _run_curl_session(t_ctx ctx, char *path, char *data, cJSON **response, t_mth method);
 int _gecko_run(t_ctx ctx, int force_kill);
 int _wait_for_gecko_ready(t_ctx * ctx);
+void _debug_response(cJSON * response_json);
 
 #endif				// COMMUNICATION_H

@@ -160,3 +160,17 @@ int _wait_for_gecko_ready(t_ctx *ctx) {
     DEBUG("geckodriver failed to start after %d attempts", max_retries);
     return -1;
 }
+
+void _debug_response(cJSON * response_json) {
+    if (!response_json) {
+        DEBUG("response_json is NULL");
+        return;
+    }
+    char *json_str = cJSON_Print(response_json);
+    if (json_str) {
+        DEBUG("response JSON: %s", json_str);
+        free(json_str);
+    } else {
+        DEBUG("failed to print response JSON");
+    }
+}

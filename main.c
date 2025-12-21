@@ -50,6 +50,23 @@ int main(int argc, char *argv[]) {
     sleep(2);
     INFO("refresh");
     web_refresh(ctx);
+    sleep(4);
+
+    web_window_rect current_rect = web_get_window_rect(ctx);
+    INFO("Current rect: x=%d, y=%d, width=%d, height=%d", current_rect.x, current_rect.y, current_rect.width, current_rect.height);
+    sleep(4);
+    web_window_rect rect = web_fullscreen_window(ctx);
+    INFO("Fullscreen rect: x=%d, y=%d, width=%d, height=%d", rect.x, rect.y, rect.width, rect.height);
+    sleep(4);
+    rect = web_maximize_window(ctx);
+    INFO("Maximized rect: x=%d, y=%d, width=%d, height=%d", rect.x, rect.y, rect.width, rect.height);
+    sleep(4);
+    rect = web_minimize_window(ctx);
+    INFO("Minimized rect: x=%d, y=%d, width=%d, height=%d", rect.x, rect.y, rect.width, rect.height);
+    sleep(4);
+
+    web_set_window_rect(ctx, current_rect);
+
 
     INFO("DONE");
     sleep(5);
