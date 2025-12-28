@@ -6,7 +6,7 @@
 web_window_rect web_get_window_rect(web_context ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/window/rect", NULL, &response_json, GET);
-    _debug_response(response_json);
+    DEBUG_JSON(response_json);
 
     cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
 
@@ -34,7 +34,7 @@ int web_set_window_rect(web_context ctx, web_window_rect rect) {
 
     cJSON *response_json = NULL;
     _rcs(ctx, "/window/rect", request_str, &response_json, POST);
-    _debug_response(response_json);
+    DEBUG_JSON(response_json);
 
     free(request_str);
 
@@ -47,7 +47,7 @@ int web_set_window_rect(web_context ctx, web_window_rect rect) {
 web_window_rect web_maximize_window(web_context ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/window/maximize", NULL, &response_json, POST);
-    _debug_response(response_json);
+    DEBUG_JSON(response_json);
 
     cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
 
@@ -66,7 +66,7 @@ web_window_rect web_maximize_window(web_context ctx) {
 web_window_rect web_minimize_window(web_context ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/window/minimize", NULL, &response_json, POST);
-    _debug_response(response_json);
+    DEBUG_JSON(response_json);
     cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
 
     web_window_rect rect;
@@ -84,7 +84,7 @@ web_window_rect web_minimize_window(web_context ctx) {
 web_window_rect web_fullscreen_window(web_context ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/window/fullscreen", NULL, &response_json, POST);
-    _debug_response(response_json);
+    DEBUG_JSON(response_json);
     cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
 
     web_window_rect rect;

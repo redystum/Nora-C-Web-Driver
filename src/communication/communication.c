@@ -22,13 +22,13 @@ size_t _write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
     return total;
 }
 
-void _run_curl(t_ctx ctx, char *path, char *data, cJSON **response_json, t_mth method) {
+int _run_curl(web_context ctx, char *path, char *data, cJSON **response_json, t_mth method) {
     DEBUG("path='%s' data='%s'", path ? path : "(null)",
           data ? data : "(null)");
     CURL *curl = curl_easy_init();
     if (!curl) {
         DEBUG("curl_easy_init failed");
-        return;
+        return -2;
     }
 
     char url[1024] = {0};
@@ -62,7 +62,8 @@ void _run_curl(t_ctx ctx, char *path, char *data, cJSON **response_json, t_mth m
         } else {
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "{}");
         }
-    } else { // Default to GET
+    } else {
+        // Default to GET
         DEBUG("setting method to GET");
         curl_easy_setopt(curl, CURLOPT_HTTPGET, 1L);
     }
@@ -80,6 +81,7 @@ void _run_curl(t_ctx ctx, char *path, char *data, cJSON **response_json, t_mth m
     CURLcode res = curl_easy_perform(curl);
     if (res != CURLE_OK) {
         DEBUG("curl_easy_perform failed: %s", curl_easy_strerror(res));
+        return -1;
     } else {
         DEBUG("request OK, response (truncated): %.200s", raw_buf);
         if (response_json) {
@@ -87,9 +89,10 @@ void _run_curl(t_ctx ctx, char *path, char *data, cJSON **response_json, t_mth m
         }
     }
     curl_easy_cleanup(curl);
+    return 0;
 }
 
-void _run_curl_session(t_ctx ctx, char *path, char *data, cJSON **response, t_mth method) {
+void _run_curl_session(web_context ctx, char *path, char *data, cJSON **response, t_mth method) {
     char url[2048];
     char p[1024];
     if (path && path[0] != '/') {
@@ -97,13 +100,13 @@ void _run_curl_session(t_ctx ctx, char *path, char *data, cJSON **response, t_mt
         path = p;
     }
 
-    sprintf(url, "/session/%s%s", ctx.session_id, path ? path : "");
+    sprintf(url, "/session/%s%s", ctx.session.id, path ? path : "");
     DEBUG("session_url='%s' data='%s'",
           url ? url : "(null)", data ? data : "(null)");
     _run_curl(ctx, url, data, response, method);
 }
 
-int _gecko_run(t_ctx ctx, int force_kill) {
+int _gecko_run(web_context ctx, int force_kill) {
     if (force_kill) {
         char kill_cmd[256] = {0};
         sprintf(kill_cmd, "fuser -k -n tcp %d > /dev/null 2>&1", ctx.port);
@@ -125,52 +128,28 @@ int _gecko_run(t_ctx ctx, int force_kill) {
     return res;
 }
 
-int _wait_for_gecko_ready(t_ctx *ctx) {
+int _wait_for_gecko_ready(web_context *ctx) {
     cJSON *response = NULL;
     int max_retries = 30;
     int retry = 0;
 
     while (retry < max_retries) {
-        sleep(1);
-        if (response) cJSON_Delete(response);
-        response = NULL;
-
-        _run_curl(*ctx, "/session",
-                  "{\"capabilities\": {\"alwaysMatch\": {\"browserName\": \"firefox\"}}}",
-                  &response, POST);
-
-        if (response) {
-            cJSON *val = cJSON_GetObjectItem(response, "value");
-            cJSON *sess = cJSON_GetObjectItem(val, "sessionId");
-            if (cJSON_IsString(sess) && sess->valuestring) {
-                DEBUG("geckodriver is ready");
-                ctx->session_id = strdup(sess->valuestring);
-                cJSON_Delete(response);
-                return 0;
-            }
+        web_session session = web_create_session(*ctx);
+        DEBUG("session.id='%s'", session.id ? session.id : "(null)");
+        WARNING("%s", session.id);
+        if (session.id != NULL) {
+            INFO("geckodriver is ready");
+            ctx->session = session;
+            cJSON_Delete(response);
+            return 0;
         }
-        retry++;
-        DEBUG("geckodriver not ready yet, retry %d/%d",
-              retry, max_retries);
 
+        DEBUG("waiting for geckodriver to be ready... (%d/%d)", retry + 1, max_retries);
+        if (response) cJSON_Delete(response);
         sleep(1);
+        retry++;
     }
 
-    if (response) cJSON_Delete(response);
-    DEBUG("geckodriver failed to start after %d attempts", max_retries);
+    DEBUG("geckodriver failed to start after %d attempts");
     return -1;
-}
-
-void _debug_response(cJSON * response_json) {
-    if (!response_json) {
-        DEBUG("response_json is NULL");
-        return;
-    }
-    char *json_str = cJSON_Print(response_json);
-    if (json_str) {
-        DEBUG("response JSON: %s", json_str);
-        free(json_str);
-    } else {
-        DEBUG("failed to print response JSON");
-    }
 }

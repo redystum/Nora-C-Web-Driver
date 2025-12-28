@@ -67,6 +67,18 @@ int main(int argc, char *argv[]) {
 
     web_set_window_rect(ctx, current_rect);
 
+    web_timeouts timeouts = web_get_timeouts(ctx);
+    INFO("Current timeouts: script=%d ms, pageLoad=%d ms, implicit=%d ms",
+         timeouts.script_ms, timeouts.page_load_ms, timeouts.implicit_wait_ms);
+    sleep(2);
+
+    timeouts.script_ms += 2000;
+    timeouts.page_load_ms += 2000;
+    timeouts.implicit_wait_ms += 2000;
+    web_set_timeouts(ctx, timeouts);
+    timeouts = web_get_timeouts(ctx);
+    INFO("Current timeouts: script=%d ms, pageLoad=%d ms, implicit=%d ms",
+         timeouts.script_ms, timeouts.page_load_ms, timeouts.implicit_wait_ms);
 
     INFO("DONE");
     sleep(5);

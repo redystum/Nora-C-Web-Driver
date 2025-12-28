@@ -1,6 +1,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <cjson/cJSON.h>
+
 /**
  * \brief Prints an error message and aborts the program (PANIC)
  * \param code code the error code
@@ -30,14 +32,23 @@
  * \param ... ...
  */
 #define DEBUG(...) debug(__FILE__, __LINE__, __func__, __VA_ARGS__)
+/**
+ * \brief Prints a cJSON object for debugging
+ * \param json  the cJSON object to debug
+ */
+#define DEBUG_JSON(json) debug_json(json, __FILE__, __LINE__, __func__)
 #else
-extern int verbose_enabled;
 /**
  * \brief Prints a debug message if DEBUG_ENABLED is defined
  * \param fmt format string
  * \param ... ...
  */
 #define DEBUG(...)
+/**
+ * \brief Prints a cJSON object for debugging
+ * \param json  the cJSON object to debug
+ */
+#define DEBUG_JSON(json)
 #endif
 
 /**
@@ -68,5 +79,6 @@ void error(char *file, int line, int code, char *fmt, ...);
 void warning(char *format, ...);
 void info(char *format, ...);
 void debug(char *file, int line, const char *func, char *format, ...);
+void debug_json(cJSON *json, char *file, int line, const char *func);
 
 #endif				// UTILS_H

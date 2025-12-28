@@ -68,6 +68,20 @@ void debug(char *file, int line, const char *func, char *format, ...) {
     fflush(stdout);
 }
 
+void debug_json(cJSON *json, char *file, int line, const char *func) {
+    if (!json) {
+        debug(file, line, func, "response JSON is NULL");
+        return;
+    }
+    char *json_str = cJSON_Print(json);
+    if (json_str) {
+        debug(file, line, func, "response JSON: %s", json_str);
+        free(json_str);
+    } else {
+        debug(file, line, func, "response JSON could not be printed");
+    }
+}
+
 char *log_file_path = NULL;
 
 void ut_file_log_init(const char *path) {
