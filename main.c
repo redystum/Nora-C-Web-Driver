@@ -44,14 +44,23 @@ int main(int argc, char *argv[]) {
 
     char *window2 = web_new_window(ctx);
     sleep(5);
-    web_close_window(ctx);
-    sleep(5);
     web_switch_to_window(ctx, window2);
     sleep(5);
-    // web_get_window_handles(ctx);
-    // web_new_tab(ctx);
+    char **handles = web_get_window_handles(ctx);
+    for (int i = 0; handles[i] != NULL; i++) {
+        printf("Handle %d: %s\n", i, handles[i]);
+        free(handles[i]);
+    }
+    free(handles);
+    web_close_window(ctx); // Close current window (window2)
+    sleep(2);
+    web_switch_to_window(ctx, window1);
+    char *tab1 = web_new_tab(ctx);
+    web_switch_to_tab(ctx, tab1);
+    sleep(2);
+    web_navigate_to(ctx, "https://www.example.com");
+    web_close_tab(ctx);
     // web_switch_to_page_content(ctx);
-    // web_switch_to_tab(ctx, 0);
     // web_switch_to_frame(ctx, "");
     // web_switch_to_frame_parent(ctx);
 

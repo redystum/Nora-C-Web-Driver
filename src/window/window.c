@@ -117,6 +117,8 @@ int web_close_window(web_context ctx) {
     return resp;
 }
 
+int web_close_tab(web_context ctx) { return web_close_window(ctx); }
+
 int web_switch_to_window(web_context ctx, char *handle) {
     cJSON *response_json = NULL;
     char data[1024];
@@ -127,10 +129,25 @@ int web_switch_to_window(web_context ctx, char *handle) {
     return resp;
 }
 
+int web_switch_to_tab(web_context ctx, char *handle) {
+    return web_switch_to_window(ctx, handle);
+}
+
 char **web_get_window_handles(web_context ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/window/handles", NULL, &response_json, GET);
     DEBUG_JSON(response_json);
+
+    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+    int count = cJSON_GetArraySize(value);
+    char **handles = malloc((count + 1) * sizeof(char *));
+    for (int i = 0; i < count; i++) {
+        cJSON *item = cJSON_GetArrayItem(value, i);
+        handles[i] = strdup(item->valuestring);
+    }
+    handles[count] = NULL; // Null-terminate the array
+    cJSON_Delete(response_json);
+    return handles;
 }
 
 char *web_new_window(web_context ctx) {
@@ -149,17 +166,17 @@ char *web_new_tab(web_context ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/window/new", "{\"type\":\"tab\"}", &response_json, POST);
     DEBUG_JSON(response_json);
+
+    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+    char *val = cJSON_GetObjectItemCaseSensitive(value, "handle")->valuestring;
+    char *handle = strdup(val);
+    cJSON_Delete(response_json);
+    return handle;
 }
 
 int web_switch_to_page_content(web_context ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/frame/parent", NULL, &response_json, POST);
-    DEBUG_JSON(response_json);
-}
-
-int web_switch_to_tab(web_context ctx, char *tab_index) {
-    cJSON *response_json = NULL;
-    _rcs(ctx, "/window", tab_index, &response_json, POST);
     DEBUG_JSON(response_json);
 }
 
