@@ -3,9 +3,20 @@
 
 #include "../core/core.h"
 
+
+/**
+ * \brief Get current window handle
+ * \param ctx  web context
+ * \return current window handle
+ */
 char *web_get_window(web_context ctx);
-char *web_close_window(web_context * ctx);
-char *web_switch_to_window(web_context ctx, char *handle);
+/**
+ * \brief Close current window
+ * \param ctx  web context
+ * \return 0 on success, -1 on failure
+ */
+int web_close_window(web_context ctx);
+int web_switch_to_window(web_context ctx, char *handle);
 char **web_get_window_handles(web_context ctx);
 char *web_new_window(web_context ctx);
 char *web_new_tab(web_context ctx);

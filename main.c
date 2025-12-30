@@ -25,9 +25,9 @@ int main(int argc, char *argv[]) {
 
     web_context ctx = web_init(gecko, firefox, port, 1);
 
-    web_navigate_to(ctx, "https://www.example.com");
-
-    sleep(2);
+    // web_navigate_to(ctx, "https://www.example.com");
+    //
+    // sleep(2);
 
     web_navigate_to(ctx, "http://localhost/simple.html");
 
@@ -35,8 +35,30 @@ int main(int argc, char *argv[]) {
 
     char *current_url = web_get_url(ctx);
     printf("Current URL: %s\n", current_url);
-
     free(current_url);
+
+    INFO("\n\n\n\n------ WINDOW TESTS -----");
+
+    char* window1 = web_get_window(ctx);
+    printf("Current Window Handle: %s\n", window1);
+
+    char *window2 = web_new_window(ctx);
+    sleep(5);
+    web_close_window(ctx);
+    sleep(5);
+    web_switch_to_window(ctx, window2);
+    sleep(5);
+    // web_get_window_handles(ctx);
+    // web_new_tab(ctx);
+    // web_switch_to_page_content(ctx);
+    // web_switch_to_tab(ctx, 0);
+    // web_switch_to_frame(ctx, "");
+    // web_switch_to_frame_parent(ctx);
+
+    INFO("\n------ OTHER TESTS -----");
+
+
+    /*
 
     char *title = web_get_title(ctx);
     printf("Page Title: %s\n", title);
@@ -79,7 +101,7 @@ int main(int argc, char *argv[]) {
     timeouts = web_get_timeouts(ctx);
     INFO("Current timeouts: script=%d ms, pageLoad=%d ms, implicit=%d ms",
          timeouts.script_ms, timeouts.page_load_ms, timeouts.implicit_wait_ms);
-
+*/
     INFO("DONE");
     sleep(5);
 

@@ -92,7 +92,7 @@ int _run_curl(web_context ctx, char *path, char *data, cJSON **response_json, t_
     return 0;
 }
 
-void _run_curl_session(web_context ctx, char *path, char *data, cJSON **response, t_mth method) {
+int _run_curl_session(web_context ctx, char *path, char *data, cJSON **response, t_mth method) {
     char url[2048];
     char p[1024];
     if (path && path[0] != '/') {
@@ -103,7 +103,7 @@ void _run_curl_session(web_context ctx, char *path, char *data, cJSON **response
     sprintf(url, "/session/%s%s", ctx.session.id, path ? path : "");
     DEBUG("session_url='%s' data='%s'",
           url ? url : "(null)", data ? data : "(null)");
-    _run_curl(ctx, url, data, response, method);
+    return _run_curl(ctx, url, data, response, method);
 }
 
 int _gecko_run(web_context ctx, int force_kill) {

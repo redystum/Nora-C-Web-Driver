@@ -98,3 +98,79 @@ web_window_rect web_fullscreen_window(web_context ctx) {
     DEBUG("Fullscreen window rect: x=%d, y=%d, width=%d, height=%d", rect.x, rect.y, rect.width, rect.height);
     return rect;
 }
+
+char *web_get_window(web_context ctx) {
+    cJSON *response_json = NULL;
+    _rcs(ctx, "/window", NULL, &response_json, GET);
+    DEBUG_JSON(response_json);
+
+    char *val = cJSON_GetObjectItemCaseSensitive(response_json, "value")->valuestring;
+    char *handle = strdup(val);
+    cJSON_Delete(response_json);
+    return handle;
+}
+
+int web_close_window(web_context ctx) {
+    cJSON *response_json = NULL;
+    int resp = _rcs(ctx, "/window", NULL, &response_json, DELETE);
+    DEBUG_JSON(response_json);
+    return resp;
+}
+
+int web_switch_to_window(web_context ctx, char *handle) {
+    cJSON *response_json = NULL;
+    char data[1024];
+    snprintf(data, sizeof(data), "{\"handle\": \"%s\"}", handle);
+    int resp = _rcs(ctx, "/window", data, &response_json, POST);
+    DEBUG_JSON(response_json);
+
+    return resp;
+}
+
+char **web_get_window_handles(web_context ctx) {
+    cJSON *response_json = NULL;
+    _rcs(ctx, "/window/handles", NULL, &response_json, GET);
+    DEBUG_JSON(response_json);
+}
+
+char *web_new_window(web_context ctx) {
+    cJSON *response_json = NULL;
+    _rcs(ctx, "/window/new", "{\"type\": \"window\"}", &response_json, POST);
+    DEBUG_JSON(response_json);
+
+    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+    char *val = cJSON_GetObjectItemCaseSensitive(value, "handle")->valuestring;
+    char *handle = strdup(val);
+    cJSON_Delete(response_json);
+    return handle;
+}
+
+char *web_new_tab(web_context ctx) {
+    cJSON *response_json = NULL;
+    _rcs(ctx, "/window/new", "{\"type\":\"tab\"}", &response_json, POST);
+    DEBUG_JSON(response_json);
+}
+
+int web_switch_to_page_content(web_context ctx) {
+    cJSON *response_json = NULL;
+    _rcs(ctx, "/frame/parent", NULL, &response_json, POST);
+    DEBUG_JSON(response_json);
+}
+
+int web_switch_to_tab(web_context ctx, char *tab_index) {
+    cJSON *response_json = NULL;
+    _rcs(ctx, "/window", tab_index, &response_json, POST);
+    DEBUG_JSON(response_json);
+}
+
+int web_switch_to_frame(web_context ctx, char *frame_id) {
+    cJSON *response_json = NULL;
+    _rcs(ctx, "/frame", frame_id, &response_json, POST);
+    DEBUG_JSON(response_json);
+}
+
+int web_switch_to_frame_parent(web_context ctx) {
+    cJSON *response_json = NULL;
+    _rcs(ctx, "/frame/parent", NULL, &response_json, POST);
+    DEBUG_JSON(response_json);
+}
