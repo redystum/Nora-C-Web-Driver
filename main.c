@@ -60,9 +60,12 @@ int main(int argc, char *argv[]) {
     sleep(2);
     web_navigate_to(ctx, "https://www.example.com");
     web_close_tab(ctx);
-    // web_switch_to_page_content(ctx);
-    // web_switch_to_frame(ctx, "");
-    // web_switch_to_frame_parent(ctx);
+    sleep(2);
+    web_switch_to_window(ctx, window1);
+    web_switch_to_page_content(ctx);
+    // i forgot i need to create a element first...
+    web_switch_to_frame(ctx, NULL);
+    web_switch_to_frame_parent(ctx);
 
     INFO("\n------ OTHER TESTS -----");
 
