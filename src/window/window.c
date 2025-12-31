@@ -176,7 +176,9 @@ char *web_new_tab(web_context ctx) {
 
 int web_switch_to_page_content(web_context ctx) {
     cJSON *response_json = NULL;
-    int resp = _rcs(ctx, "/frame", NULL, &response_json, POST);
+    char data[1024];
+    snprintf(data, sizeof(data), "{\"id\": null}");
+    int resp = _rcs(ctx, "/frame", data, &response_json, POST);
     DEBUG_JSON(response_json);
     return resp;
 }
@@ -197,7 +199,6 @@ int web_switch_to_frame(web_context ctx, char *frame_id) {
     cJSON *response_json = NULL;
     char data[1024];
     snprintf(data, sizeof(data), "{\"id\": {\"element-6066-11e4-a52e-4f735466cecf\": \"%s\"}}", frame_id);
-
     int resp = _rcs(ctx, "/frame", frame_id, &response_json, POST);
     DEBUG_JSON(response_json);
     return resp;
