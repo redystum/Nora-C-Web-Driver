@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "navigation.h"
-#include "../communication/communication.h"
+#include "../communication_internal/communication.h"
 
 /**
  * \brief Change current URL
@@ -13,7 +13,7 @@ int web_navigate_to(web_context *ctx, char *url) {
     char data[2048] = {0};
     sprintf(data, "{\"url\": \"%s\"}", url);
     DEBUG("changing url to link='%s' data='%s'", url, data);
-    _rcs(ctx, "/url", data, &response_json, POST);
+    RCS(ctx, "/url", data, &response_json, WEB_POST);
     DEBUG_JSON(response_json);
     return 0;
 }
@@ -48,7 +48,7 @@ int wait_to_page_load(web_context *ctx, int max_wait_seconds) {
  */
 char *web_get_url(web_context *ctx) {
     cJSON *response_json = NULL;
-    _rcs(ctx, "/url", NULL, &response_json, GET);
+    RCS(ctx, "/url", NULL, &response_json, WEB_GET);
     DEBUG_JSON(response_json);
 
     cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
@@ -71,7 +71,7 @@ char *web_get_url(web_context *ctx) {
  */
 int web_back(web_context *ctx) {
     cJSON *response_json = NULL;
-    _rcs(ctx, "/back", NULL, &response_json, POST);
+    RCS(ctx, "/back", NULL, &response_json, WEB_POST);
     DEBUG_JSON(response_json);
     return 0;
 }
@@ -83,7 +83,7 @@ int web_back(web_context *ctx) {
  */
 int web_forward(web_context *ctx) {
     cJSON *response_json = NULL;
-    _rcs(ctx, "/forward", NULL, &response_json, POST);
+    RCS(ctx, "/forward", NULL, &response_json, WEB_POST);
     DEBUG_JSON(response_json);
     return 0;
 }
@@ -95,7 +95,7 @@ int web_forward(web_context *ctx) {
  */
 int web_refresh(web_context *ctx) {
     cJSON *response_json = NULL;
-    _rcs(ctx, "/refresh", NULL, &response_json, POST);
+    RCS(ctx, "/refresh", NULL, &response_json, WEB_POST);
     DEBUG_JSON(response_json);
     return 0;
 }
@@ -107,7 +107,7 @@ int web_refresh(web_context *ctx) {
  */
 char *web_get_title(web_context *ctx) {
     cJSON *response_json = NULL;
-    _rcs(ctx, "/title", NULL, &response_json, GET);
+    RCS(ctx, "/title", NULL, &response_json, WEB_GET);
     DEBUG_JSON(response_json);
 
     cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");

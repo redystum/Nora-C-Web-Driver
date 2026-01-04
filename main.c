@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
 
     // teste error structure
     cJSON *response_json = NULL;
-    _rcs(&ctx, "/window/rect", "{\"width\": -5}", &response_json, POST);
+    RCS(&ctx, "/window/rect", "{\"width\": -5}", &response_json, WEB_POST);
     DEBUG_JSON(response_json);
     web_error err = web_get_last_error(&ctx);
     printf("Last Error: URL=%s, Code=%d, Error=%s, Message=%s\n",

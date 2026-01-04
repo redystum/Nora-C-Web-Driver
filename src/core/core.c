@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "core.h"
 
-#include "../communication/communication.h"
+#include "../communication_internal/communication.h"
 
 /**
  * \brief Reset web context maintaining paths and port
@@ -38,13 +38,13 @@ web_context web_init(char *geckodriverPath, char *firefoxPath, int port, int for
         ctx.port = 9515;
     }
 
-    if (_gecko_run(&ctx, force_kill) < 0) {
+    if (gecko_run(&ctx, force_kill) < 0) {
         DEBUG("Failed to start geckodriver");
         web_reset_context(&ctx);
         return ctx;
     }
 
-    if (_wait_for_gecko_ready(&ctx) < 0) {
+    if (wait_for_gecko_ready(&ctx) < 0) {
         DEBUG("Geckodriver failed to start");
         web_reset_context(&ctx);
         return ctx;
@@ -88,7 +88,7 @@ int web_usleep(int microseconds) {
 
 web_timeouts web_get_timeouts(web_context *ctx) {
     cJSON *response_json = NULL;
-    _rcs(ctx, "/timeouts", NULL, &response_json, GET);
+    RCS(ctx, "/timeouts", NULL, &response_json, WEB_GET);
 
     cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
     web_timeouts timeouts;
@@ -112,7 +112,7 @@ int web_set_timeouts(web_context *ctx, web_timeouts timeouts) {
     cJSON_Delete(request_json);
 
     cJSON *response_json = NULL;
-    int status = _rcs(ctx, "/timeouts", request_str, &response_json, POST);
+    int status = RCS(ctx, "/timeouts", request_str, &response_json, WEB_POST);
     DEBUG_JSON(response_json);
 
     free(request_str);
@@ -125,7 +125,7 @@ int web_set_timeouts(web_context *ctx, web_timeouts timeouts) {
 
 web_status web_get_status(web_context *ctx) {
     cJSON *response_json = NULL;
-    _rcs(ctx, "/status", NULL, &response_json, GET);
+    RCS(ctx, "/status", NULL, &response_json, WEB_GET);
 
     cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
     web_status status;
@@ -146,9 +146,9 @@ void free_status(web_status status) {
 int web_create_session(web_context *ctx, web_session *session) {
     cJSON *response = NULL;
 
-    int status = _run_curl(ctx, "/session",
+    int status = run_curl(ctx, "/session",
           "{\"capabilities\": {\"alwaysMatch\": {\"browserName\": \"firefox\"}}}",
-          &response, POST);
+          &response, WEB_POST);
 
     DEBUG("Create session status: %d", status);
 

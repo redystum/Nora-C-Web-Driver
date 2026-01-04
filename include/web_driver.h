@@ -7,6 +7,6 @@
 #include "../src/element/element.h"
 #include "../src/cookie/cookie.h"
 #include "../src/document/document.h"
-#include "../src/communication/communication.h"
+#include "../src/communication_internal/communication.h" // TODO: remove this line
 
 #endif				// WEB_DRIVER_H

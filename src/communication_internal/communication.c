@@ -1,8 +1,8 @@
 #include "communication.h"
 
-size_t _write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
+size_t write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
     size_t total = size * nmemb;
-    struct _RespBuf *rb = (struct _RespBuf *) userdata;
+    web_resp_buf *rb = (web_resp_buf *) userdata;
     if (!rb || !rb->buf) {
         return total;
     }
@@ -21,7 +21,7 @@ size_t _write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
     return total;
 }
 
-int _run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, _web_request_method method) {
+int run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, web_request_method method) {
     DEBUG("path='%s' data='%s'", path ? path : "(null)",
           data ? data : "(null)");
     CURL *curl = curl_easy_init();
@@ -47,14 +47,14 @@ int _run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, _
 
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60L);
 
-    if (method == POST) {
+    if (method == WEB_POST) {
         curl_easy_setopt(curl, CURLOPT_POST, 1L);
         if (data != NULL) {
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
         } else {
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, "{}");
         }
-    } else if (method == DELETE) {
+    } else if (method == WEB_DELETE) {
         curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE");
         if (data != NULL) {
             curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data);
@@ -69,12 +69,12 @@ int _run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, _
 
     /* prepare safe response buffer wrapper */
     char raw_buf[RESPONSE_CAP] = {0};
-    struct _RespBuf rb;
+    web_resp_buf rb;
     rb.buf = raw_buf;
     rb.cap = RESPONSE_CAP;
     rb.len = 0;
 
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _write_callback);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &rb);
 
     long http_code = 0;
@@ -113,7 +113,7 @@ int _run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, _
     return http_code;
 }
 
-int _run_curl_session(web_context *ctx, char *path, char *data, cJSON **response, _web_request_method method) {
+int run_curl_session(web_context *ctx, char *path, char *data, cJSON **response, web_request_method method) {
     char url[2048];
     char p[1024];
     if (path && path[0] != '/') {
@@ -123,10 +123,10 @@ int _run_curl_session(web_context *ctx, char *path, char *data, cJSON **response
 
     sprintf(url, "/session/%s%s", ctx->session.id, path ? path : "");
     DEBUG("session_url='%s' data='%s'", url, data);
-    return _run_curl(ctx, url, data, response, method);
+    return run_curl(ctx, url, data, response, method);
 }
 
-int _gecko_run(web_context *ctx, int force_kill) {
+int gecko_run(web_context *ctx, int force_kill) {
     if (force_kill) {
         char kill_cmd[256] = {0};
         sprintf(kill_cmd, "fuser -k -n tcp %d > /dev/null 2>&1", ctx->port);
@@ -148,7 +148,7 @@ int _gecko_run(web_context *ctx, int force_kill) {
     return res;
 }
 
-int _wait_for_gecko_ready(web_context *ctx) {
+int wait_for_gecko_ready(web_context *ctx) {
     cJSON *response = NULL;
     int max_retries = 30;
     int retry = 0;
