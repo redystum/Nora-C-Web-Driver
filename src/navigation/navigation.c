@@ -8,7 +8,7 @@
  * \param link new link
  * \return 0=ok
  */
-int web_navigate_to(web_context ctx, char *url) {
+int web_navigate_to(web_context *ctx, char *url) {
     cJSON *response_json = NULL;
     char data[2048] = {0};
     sprintf(data, "{\"url\": \"%s\"}", url);
@@ -24,7 +24,7 @@ int web_navigate_to(web_context ctx, char *url) {
  * \param max_wait_seconds 0=unlimited
  * \return 0=ok, -1=timeout
  */
-int wait_to_page_load(web_context ctx, int max_wait_seconds) {
+int wait_to_page_load(web_context *ctx, int max_wait_seconds) {
     int waited = 0;
     max_wait_seconds = max_wait_seconds * 2; // .5 second intervals
     if (max_wait_seconds == 0) max_wait_seconds = INT_MAX;
@@ -46,7 +46,7 @@ int wait_to_page_load(web_context ctx, int max_wait_seconds) {
  * \param ctx web context
  * \return current URL (as a pointer)
  */
-char *web_get_url(web_context ctx) {
+char *web_get_url(web_context *ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/url", NULL, &response_json, GET);
     DEBUG_JSON(response_json);
@@ -69,7 +69,7 @@ char *web_get_url(web_context ctx) {
  * \param ctx web context
  * \return 0=ok
  */
-int web_back(web_context ctx) {
+int web_back(web_context *ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/back", NULL, &response_json, POST);
     DEBUG_JSON(response_json);
@@ -81,7 +81,7 @@ int web_back(web_context ctx) {
  * \param ctx web context
  * \return 0=ok
  */
-int web_forward(web_context ctx) {
+int web_forward(web_context *ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/forward", NULL, &response_json, POST);
     DEBUG_JSON(response_json);
@@ -93,7 +93,7 @@ int web_forward(web_context ctx) {
  * \param ctx web context
  * \return 0=ok
  */
-int web_refresh(web_context ctx) {
+int web_refresh(web_context *ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/refresh", NULL, &response_json, POST);
     DEBUG_JSON(response_json);
@@ -105,7 +105,7 @@ int web_refresh(web_context ctx) {
  * \param ctx web context
  * \return current page title (as a pointer)
  */
-char *web_get_title(web_context ctx) {
+char *web_get_title(web_context *ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/title", NULL, &response_json, GET);
     DEBUG_JSON(response_json);

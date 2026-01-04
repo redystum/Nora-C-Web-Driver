@@ -4,11 +4,12 @@
 #include "../communication/communication.h"
 
 /**
- * \brief Reset web context mantaining paths and port
+ * \brief Reset web context maintaining paths and port
  * \param ctx  web context
  */
 void web_reset_context(web_context *ctx) {
     web_free_session(ctx->session);
+    web_reset_last_error(ctx);
 }
 
 /**
@@ -37,7 +38,7 @@ web_context web_init(char *geckodriverPath, char *firefoxPath, int port, int for
         ctx.port = 9515;
     }
 
-    if (_gecko_run(ctx, force_kill) < 0) {
+    if (_gecko_run(&ctx, force_kill) < 0) {
         DEBUG("Failed to start geckodriver");
         web_reset_context(&ctx);
         return ctx;
@@ -85,7 +86,7 @@ int web_usleep(int microseconds) {
     return nanosleep(&ts, NULL);
 }
 
-web_timeouts web_get_timeouts(web_context ctx) {
+web_timeouts web_get_timeouts(web_context *ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/timeouts", NULL, &response_json, GET);
 
@@ -101,7 +102,7 @@ web_timeouts web_get_timeouts(web_context ctx) {
     return timeouts;
 }
 
-int web_set_timeouts(web_context ctx, web_timeouts timeouts) {
+int web_set_timeouts(web_context *ctx, web_timeouts timeouts) {
     cJSON *request_json = cJSON_CreateObject();
     cJSON_AddNumberToObject(request_json, "script", timeouts.script_ms);
     cJSON_AddNumberToObject(request_json, "pageLoad", timeouts.page_load_ms);
@@ -111,7 +112,7 @@ int web_set_timeouts(web_context ctx, web_timeouts timeouts) {
     cJSON_Delete(request_json);
 
     cJSON *response_json = NULL;
-    _rcs(ctx, "/timeouts", request_str, &response_json, POST);
+    int status = _rcs(ctx, "/timeouts", request_str, &response_json, POST);
     DEBUG_JSON(response_json);
 
     free(request_str);
@@ -119,10 +120,10 @@ int web_set_timeouts(web_context ctx, web_timeouts timeouts) {
 
     DEBUG("Set timeouts to: script=%d ms, pageLoad=%d ms, implicit=%d ms", timeouts.script_ms, timeouts.page_load_ms,
           timeouts.implicit_wait_ms);
-    return 0;
+    return status;
 }
 
-web_status web_get_status(web_context ctx) {
+web_status web_get_status(web_context *ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/status", NULL, &response_json, GET);
 
@@ -142,8 +143,7 @@ void free_status(web_status status) {
     }
 }
 
-web_session web_create_session(web_context ctx) {
-    web_session session;
+int web_create_session(web_context *ctx, web_session *session) {
     cJSON *response = NULL;
 
     int status = _run_curl(ctx, "/session",
@@ -153,23 +153,25 @@ web_session web_create_session(web_context ctx) {
     DEBUG("Create session status: %d", status);
 
     if (status < 0) {
-        session.id = NULL;
-        session.capabilities = NULL;
-        return session;
+        session->id = NULL;
+        session->capabilities = NULL;
+        return status;
     }
+
+    DEBUG_JSON(response);
 
     cJSON *val = cJSON_GetObjectItem(response, "value");
     DEBUG_JSON(val);
 
-    session.id = strdup(cJSON_GetObjectItem(val, "sessionId")->valuestring);
-    DEBUG("session id='%s'", session.id);
-    session.capabilities = cJSON_Duplicate(cJSON_GetObjectItem(val, "capabilities"), true);
-    DEBUG("capabilities='%s'", cJSON_Print(session.capabilities));
+    session->id = strdup(cJSON_GetObjectItem(val, "sessionId")->valuestring);
+    DEBUG("session id='%s'", session->id);
+    session->capabilities = cJSON_Duplicate(cJSON_GetObjectItem(val, "capabilities"), true);
+    DEBUG("capabilities='%s'", cJSON_Print(session->capabilities));
     cJSON_Delete(response);
 
-    DEBUG("Created session with id='%s'", session.id);
+    DEBUG("Created session with id='%s'", session->id);
 
-    return session;
+    return status;
 }
 
 void web_free_session(web_session session) {
@@ -179,4 +181,24 @@ void web_free_session(web_session session) {
     if (session.capabilities) {
         cJSON_Delete(session.capabilities);
     }
+}
+
+void web_reset_last_error(web_context *ctx) {
+    if (ctx->last_error.url) {
+        free(ctx->last_error.url);
+        ctx->last_error.url = NULL;
+    }
+    if (ctx->last_error.error) {
+        free(ctx->last_error.error);
+        ctx->last_error.error = NULL;
+    }
+    if (ctx->last_error.message) {
+        free(ctx->last_error.message);
+        ctx->last_error.message = NULL;
+    }
+    ctx->last_error.code = 0;
+}
+
+web_error web_get_last_error(web_context *ctx) {
+    return ctx->last_error;
 }

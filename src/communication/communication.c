@@ -1,4 +1,3 @@
-#include <stdio.h>
 #include "communication.h"
 
 size_t _write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
@@ -22,22 +21,22 @@ size_t _write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
     return total;
 }
 
-int _run_curl(web_context ctx, char *path, char *data, cJSON **response_json, t_mth method) {
+int _run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, _web_request_method method) {
     DEBUG("path='%s' data='%s'", path ? path : "(null)",
           data ? data : "(null)");
     CURL *curl = curl_easy_init();
     if (!curl) {
         DEBUG("curl_easy_init failed");
-        return -2;
+        return -1;
     }
 
     char url[1024] = {0};
     if (path && path[0] == '/') {
         DEBUG("path starts with /");
-        sprintf(url, "http://127.0.0.1:%d%s", ctx.port, path);
+        sprintf(url, "http://127.0.0.1:%d%s", ctx->port, path);
     } else if (path) {
         DEBUG("path does not start with /");
-        sprintf(url, "http://127.0.0.1:%d/%s", ctx.port, path);
+        sprintf(url, "http://127.0.0.1:%d/%s", ctx->port, path);
     }
     DEBUG("url='%s'", url);
 
@@ -78,21 +77,43 @@ int _run_curl(web_context ctx, char *path, char *data, cJSON **response_json, t_
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, _write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &rb);
 
+    long http_code = 0;
     CURLcode res = curl_easy_perform(curl);
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
     if (res != CURLE_OK) {
         DEBUG("curl_easy_perform failed: %s", curl_easy_strerror(res));
         return -1;
     } else {
-        DEBUG("request OK, response (truncated): %.200s", raw_buf);
+        DEBUG("request OK, HTTP response code: %ld", http_code);
+        DEBUG("response (truncated): %.200s", raw_buf);
+
+        if (http_code < 200 || http_code >= 300) {
+            DEBUG("HTTP error code %ld received", http_code);
+            http_code = -http_code;
+            response_json = NULL;
+            cJSON *resp = cJSON_Parse(raw_buf);
+            curl_easy_cleanup(curl);
+            cJSON *error_info = cJSON_GetObjectItemCaseSensitive(resp, "value");
+            web_error err = {0};
+            err.code = http_code;
+            err.url = strdup(url);
+            err.error = strdup(cJSON_GetObjectItemCaseSensitive(error_info, "error")->valuestring);
+            err.message = strdup(cJSON_GetObjectItemCaseSensitive(error_info, "message")->valuestring);
+            ctx->last_error = err;
+            cJSON_Delete(resp);
+            return http_code;
+        }
+
         if (response_json) {
             *response_json = cJSON_Parse(raw_buf);
         }
+        web_reset_last_error(ctx);
     }
     curl_easy_cleanup(curl);
-    return 0;
+    return http_code;
 }
 
-int _run_curl_session(web_context ctx, char *path, char *data, cJSON **response, t_mth method) {
+int _run_curl_session(web_context *ctx, char *path, char *data, cJSON **response, _web_request_method method) {
     char url[2048];
     char p[1024];
     if (path && path[0] != '/') {
@@ -100,29 +121,28 @@ int _run_curl_session(web_context ctx, char *path, char *data, cJSON **response,
         path = p;
     }
 
-    sprintf(url, "/session/%s%s", ctx.session.id, path ? path : "");
-    DEBUG("session_url='%s' data='%s'",
-          url ? url : "(null)", data ? data : "(null)");
+    sprintf(url, "/session/%s%s", ctx->session.id, path ? path : "");
+    DEBUG("session_url='%s' data='%s'", url, data);
     return _run_curl(ctx, url, data, response, method);
 }
 
-int _gecko_run(web_context ctx, int force_kill) {
+int _gecko_run(web_context *ctx, int force_kill) {
     if (force_kill) {
         char kill_cmd[256] = {0};
-        sprintf(kill_cmd, "fuser -k -n tcp %d > /dev/null 2>&1", ctx.port);
+        sprintf(kill_cmd, "fuser -k -n tcp %d > /dev/null 2>&1", ctx->port);
         int res = system(kill_cmd);
         DEBUG("killed existing geckodriver on port %d, res=%d",
-              ctx.port, res);
+              ctx->port, res);
         sleep(1);
     }
 
     char cmd[2048] = {0};
     char command[1024] = {0};
-    sprintf(command, "--port %d --binary %s > /dev/null 2>&1 &", ctx.port, ctx.firefoxPath);
+    sprintf(command, "--port %d --binary %s > /dev/null 2>&1 &", ctx->port, ctx->firefoxPath);
     DEBUG("starting geckodriver with command fragment: %s", command);
 
-    sprintf(cmd, "%s %s", ctx.geckodriverPath, command);
-    DEBUG("executing command: %s", cmd ? cmd : "(null)");
+    sprintf(cmd, "%s %s", ctx->geckodriverPath, command);
+    DEBUG("executing command: %s", cmd);
     int res = system(cmd);
     DEBUG("geckodriver start command returned %d", res);
     return res;
@@ -134,9 +154,15 @@ int _wait_for_gecko_ready(web_context *ctx) {
     int retry = 0;
 
     while (retry < max_retries) {
-        web_session session = web_create_session(*ctx);
+        web_session session;
+        int status = web_create_session(ctx, &session);
+        if (status < 0) {
+            DEBUG("web_create_session failed with status %d", status);
+            sleep(1);
+            retry++;
+            continue;
+        }
         DEBUG("session.id='%s'", session.id ? session.id : "(null)");
-        WARNING("%s", session.id);
         if (session.id != NULL) {
             INFO("geckodriver is ready");
             ctx->session = session;

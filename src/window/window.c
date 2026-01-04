@@ -3,7 +3,7 @@
 
 #include "communication/communication.h"
 
-web_window_rect web_get_window_rect(web_context ctx) {
+web_window_rect web_get_window_rect(web_context *ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/window/rect", NULL, &response_json, GET);
     DEBUG_JSON(response_json);
@@ -22,7 +22,7 @@ web_window_rect web_get_window_rect(web_context ctx) {
     return rect;
 }
 
-int web_set_window_rect(web_context ctx, web_window_rect rect) {
+int web_set_window_rect(web_context *ctx, web_window_rect rect) {
     cJSON *request_json = cJSON_CreateObject();
     cJSON_AddNumberToObject(request_json, "x", rect.x);
     cJSON_AddNumberToObject(request_json, "y", rect.y);
@@ -44,7 +44,7 @@ int web_set_window_rect(web_context ctx, web_window_rect rect) {
     return 0;
 }
 
-web_window_rect web_maximize_window(web_context ctx) {
+web_window_rect web_maximize_window(web_context *ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/window/maximize", NULL, &response_json, POST);
     DEBUG_JSON(response_json);
@@ -63,7 +63,7 @@ web_window_rect web_maximize_window(web_context ctx) {
     return rect;
 }
 
-web_window_rect web_minimize_window(web_context ctx) {
+web_window_rect web_minimize_window(web_context *ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/window/minimize", NULL, &response_json, POST);
     DEBUG_JSON(response_json);
@@ -81,7 +81,7 @@ web_window_rect web_minimize_window(web_context ctx) {
     return rect;
 }
 
-web_window_rect web_fullscreen_window(web_context ctx) {
+web_window_rect web_fullscreen_window(web_context *ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/window/fullscreen", NULL, &response_json, POST);
     DEBUG_JSON(response_json);
@@ -99,7 +99,7 @@ web_window_rect web_fullscreen_window(web_context ctx) {
     return rect;
 }
 
-char *web_get_window(web_context ctx) {
+char *web_get_window(web_context *ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/window", NULL, &response_json, GET);
     DEBUG_JSON(response_json);
@@ -110,16 +110,16 @@ char *web_get_window(web_context ctx) {
     return handle;
 }
 
-int web_close_window(web_context ctx) {
+int web_close_window(web_context *ctx) {
     cJSON *response_json = NULL;
     int resp = _rcs(ctx, "/window", NULL, &response_json, DELETE);
     DEBUG_JSON(response_json);
     return resp;
 }
 
-int web_close_tab(web_context ctx) { return web_close_window(ctx); }
+int web_close_tab(web_context *ctx) { return web_close_window(ctx); }
 
-int web_switch_to_window(web_context ctx, char *handle) {
+int web_switch_to_window(web_context *ctx, char *handle) {
     cJSON *response_json = NULL;
     char data[1024];
     snprintf(data, sizeof(data), "{\"handle\": \"%s\"}", handle);
@@ -129,11 +129,11 @@ int web_switch_to_window(web_context ctx, char *handle) {
     return resp;
 }
 
-int web_switch_to_tab(web_context ctx, char *handle) {
+int web_switch_to_tab(web_context *ctx, char *handle) {
     return web_switch_to_window(ctx, handle);
 }
 
-char **web_get_window_handles(web_context ctx) {
+char **web_get_window_handles(web_context *ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/window/handles", NULL, &response_json, GET);
     DEBUG_JSON(response_json);
@@ -150,7 +150,7 @@ char **web_get_window_handles(web_context ctx) {
     return handles;
 }
 
-char *web_new_window(web_context ctx) {
+char *web_new_window(web_context *ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/window/new", "{\"type\": \"window\"}", &response_json, POST);
     DEBUG_JSON(response_json);
@@ -162,7 +162,7 @@ char *web_new_window(web_context ctx) {
     return handle;
 }
 
-char *web_new_tab(web_context ctx) {
+char *web_new_tab(web_context *ctx) {
     cJSON *response_json = NULL;
     _rcs(ctx, "/window/new", "{\"type\":\"tab\"}", &response_json, POST);
     DEBUG_JSON(response_json);
@@ -174,7 +174,7 @@ char *web_new_tab(web_context ctx) {
     return handle;
 }
 
-int web_switch_to_page_content(web_context ctx) {
+int web_switch_to_page_content(web_context *ctx) {
     cJSON *response_json = NULL;
     char data[1024];
     snprintf(data, sizeof(data), "{\"id\": null}");
@@ -183,7 +183,7 @@ int web_switch_to_page_content(web_context ctx) {
     return resp;
 }
 
-int web_switch_to_frame_index(web_context ctx, int frame_index) {
+int web_switch_to_frame_index(web_context *ctx, int frame_index) {
     cJSON *response_json = NULL;
     char data[1024];
     snprintf(data, sizeof(data), "{\"id\": %d}", frame_index);
@@ -191,7 +191,7 @@ int web_switch_to_frame_index(web_context ctx, int frame_index) {
     DEBUG_JSON(response_json);
     return resp;
 }
-int web_switch_to_frame(web_context ctx, char *frame_id) {
+int web_switch_to_frame(web_context *ctx, char *frame_id) {
     if (frame_id == NULL) {
         return web_switch_to_page_content(ctx);
     }
@@ -204,7 +204,7 @@ int web_switch_to_frame(web_context ctx, char *frame_id) {
     return resp;
 }
 
-int web_switch_to_frame_parent(web_context ctx) {
+int web_switch_to_frame_parent(web_context *ctx) {
     cJSON *response_json = NULL;
     int resp = _rcs(ctx, "/frame/parent", NULL, &response_json, POST);
     DEBUG_JSON(response_json);

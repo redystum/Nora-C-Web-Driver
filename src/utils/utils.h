@@ -61,18 +61,13 @@ void ut_file_log_init(const char *path);
  * \brief Gets the path of the log file
  * \return  the path of the log file
  */
-char *ut_get_file_log_path();
+char *ut_get_file_log_path(void);
 
 /**
  * \brief Frees resources used by the log file
  */
-void ut_file_log_free();
+void ut_file_log_free(void);
 
-/*
- * Logs a message to the log file
- *
- * @param text the message to log
- */
 #define EOL '\n'
 
 void error(char *file, int line, int code, char *fmt, ...);
