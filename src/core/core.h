@@ -19,8 +19,8 @@ typedef struct {
 } web_session;
 
 typedef struct {
-    char *url;
     int code;
+    char *path;
     char *error;
     char *message;
 } web_error;
@@ -45,7 +45,16 @@ typedef struct {
     int script_ms;
 } web_timeouts;
 
-web_context web_init(char *geckodriverPath, char *firefoxPath, int port, int force_kill);
+/**
+ * \brief Initialize web context
+ * \param ctx web context to initialize
+ * \param geckodriverPath path to geckodriver executable
+ * \param firefoxPath path to firefox executable
+ * \param port port to run geckodriver on
+ * \param force_kill whether to force kill existing geckodriver on the port
+ * \return \b 0 = success \n\b -1 = empty path \n\b -2 = file not found \n\b -3 = not executable \n\b -4 = command failed \n\b -5 = startup error \n\b -6 = log file read error
+ */
+int web_init(web_context *ctx, char *geckodriverPath, char *firefoxPath, int port, int force_kill);
 int web_close(web_context *ctx);
 int web_usleep(int microseconds);
 void web_reset_context(web_context *ctx);
@@ -80,6 +89,11 @@ web_error web_get_last_error(web_context *ctx);
  * \param ctx web context
  */
 void web_reset_last_error(web_context *ctx);
-
+/**
+ * \brief
+ * \param ctx web context
+ * \param error web error
+ */
+void web_set_last_error(web_context *ctx, web_error error);
 
 #endif				// CORE_H

@@ -3,64 +3,51 @@
 
 #include "../communication_internal/communication.h"
 
-/**
- * \brief Reset web context maintaining paths and port
- * \param ctx  web context
- */
 void web_reset_context(web_context *ctx) {
     web_free_session(ctx->session);
     web_reset_last_error(ctx);
 }
 
-/**
- * \brief Initialize web context
- * \param geckodriverPath NULL = "geckodriver"
- * \param firefoxPath NULL = "firefox"
- * \param port 0 = 9515
- * \param force_kill 1 = kill existing geckodriver on port
- * \return web context
- */
-web_context web_init(char *geckodriverPath, char *firefoxPath, int port, int force_kill) {
-    web_context ctx = {0};
+int web_init(web_context *ctx, char *geckodriverPath, char *firefoxPath, int port, int force_kill) {
     if (geckodriverPath != NULL) {
-        ctx.geckodriverPath = geckodriverPath;
+        ctx->geckodriverPath = geckodriverPath;
     } else {
-        ctx.geckodriverPath = "geckodriver";
+        ctx->geckodriverPath = "geckodriver";
     }
     if (firefoxPath != NULL) {
-        ctx.firefoxPath = firefoxPath;
+        ctx->firefoxPath = firefoxPath;
     } else {
-        ctx.firefoxPath = "firefox";
+        ctx->firefoxPath = "firefox";
     }
     if (port != 0) {
-        ctx.port = port;
+        ctx->port = port;
     } else {
-        ctx.port = 9515;
+        ctx->port = 9515;
     }
+    ctx->session = (web_session){NULL, NULL};
+    ctx->last_error = (web_error){0, NULL, NULL, NULL};
 
-    if (gecko_run(&ctx, force_kill) < 0) {
+    DEBUG("--------\ngeckodriverPath='%s', firefoxPath='%s', port=%d\n--------",
+          ctx->geckodriverPath, ctx->firefoxPath,  ctx->port);
+
+    int err = 0;
+    if ((err = gecko_run(ctx, force_kill)) < 0) {
         DEBUG("Failed to start geckodriver");
-        web_reset_context(&ctx);
-        return ctx;
+        web_free_session(ctx->session);
+        return err;
     }
 
-    if (wait_for_gecko_ready(&ctx) < 0) {
+    if ((err = wait_for_gecko_ready(ctx)) < 0) {
         DEBUG("Geckodriver failed to start");
-        web_reset_context(&ctx);
-        return ctx;
+        web_free_session(ctx->session);
+        return err;
     }
 
-    DEBUG("extracted session.id='%s'", ctx.session.id);
+    DEBUG("extracted session.id='%s'", ctx->session.id);
 
-    return ctx;
+    return 0;
 }
 
-
-/**
- * \brief Close web session
- * \param ctx  web context
- * \return 0=ok
- */
 int web_close(web_context *ctx) {
     DEBUG("closing session '%s'", ctx->session.id);
     CURL *curl = curl_easy_init();
@@ -177,16 +164,18 @@ int web_create_session(web_context *ctx, web_session *session) {
 void web_free_session(web_session session) {
     if (session.id) {
         free(session.id);
+        session.id = NULL;
     }
     if (session.capabilities) {
         cJSON_Delete(session.capabilities);
+        session.capabilities = NULL;
     }
 }
 
 void web_reset_last_error(web_context *ctx) {
-    if (ctx->last_error.url) {
-        free(ctx->last_error.url);
-        ctx->last_error.url = NULL;
+    if (ctx->last_error.path) {
+        free(ctx->last_error.path);
+        ctx->last_error.path = NULL;
     }
     if (ctx->last_error.error) {
         free(ctx->last_error.error);
@@ -201,4 +190,9 @@ void web_reset_last_error(web_context *ctx) {
 
 web_error web_get_last_error(web_context *ctx) {
     return ctx->last_error;
+}
+
+void web_set_last_error(web_context *ctx, web_error error) {
+    web_reset_last_error(ctx);
+    ctx->last_error = error;
 }

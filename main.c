@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include "args.h"
+#include "communication_internal/communication.h" // just for testing, this should not be used
 #include "include/web_driver.h"
 
 int main(int argc, char *argv[]) {
@@ -23,7 +24,20 @@ int main(int argc, char *argv[]) {
     printf("%i\n", port);
     printf("------\n");
 
-    web_context ctx = web_init(gecko, firefox, port, 1);
+    gecko = "/usr/local/bin/geckodriver";
+
+    web_context ctx;
+    int r = web_init(&ctx, gecko, firefox, port, 1);
+    if (r < 0) {
+        web_error web_error = web_get_last_error(&ctx);
+        printf("Last Error: PATH=%s, Code=%d, Error=%s, Message=%s\n",
+               web_error.path,
+               web_error.code,
+               web_error.error,
+               web_error.message);
+        ERROR(1, "web_init failed with code %d", r);
+        return 1;
+    }
 
     web_navigate_to(&ctx, "https://www.example.com");
 
@@ -77,8 +91,8 @@ int main(int argc, char *argv[]) {
     RCS(&ctx, "/window/rect", "{\"width\": -5}", &response_json, WEB_POST);
     DEBUG_JSON(response_json);
     web_error err = web_get_last_error(&ctx);
-    printf("Last Error: URL=%s, Code=%d, Error=%s, Message=%s\n",
-           err.url ? err.url : "NULL",
+    printf("Last Error: PATH=%s, Code=%d, Error=%s, Message=%s\n",
+           err.path ? err.path : "NULL",
            err.code,
            err.error ? err.error : "NULL",
            err.message ? err.message : "NULL");
@@ -86,8 +100,8 @@ int main(int argc, char *argv[]) {
     web_close_window(&ctx);
 
     err = web_get_last_error(&ctx);
-    printf("Last Error: URL=%s, Code=%d, Error=%s, Message=%s\n",
-           err.url ? err.url : "NULL",
+    printf("Last Error: PATH=%s, Code=%d, Error=%s, Message=%s\n",
+           err.path ? err.path : "NULL",
            err.code,
            err.error ? err.error : "NULL",
            err.message ? err.message : "NULL");
