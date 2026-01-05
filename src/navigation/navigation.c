@@ -2,34 +2,23 @@
 #include "navigation.h"
 #include "../communication_internal/communication.h"
 
-/**
- * \brief Change current URL
- * \param ctx web context
- * \param link new link
- * \return 0=ok
- */
 int web_navigate_to(web_context *ctx, char *url) {
     cJSON *response_json = NULL;
     char data[2048] = {0};
     sprintf(data, "{\"url\": \"%s\"}", url);
     DEBUG("changing url to link='%s' data='%s'", url, data);
-    RCS(ctx, "/url", data, &response_json, WEB_POST);
+    int resp = RCS(ctx, "/url", data, &response_json, WEB_POST);
     DEBUG_JSON(response_json);
-    return 0;
+    return resp;
 }
 
-/**
- * \brief Wait until page is loaded
- * \param ctx web context
- * \param max_wait_seconds 0=unlimited
- * \return 0=ok, -1=timeout
- */
 int wait_to_page_load(web_context *ctx, int max_wait_seconds) {
     int waited = 0;
     max_wait_seconds = max_wait_seconds * 2; // .5 second intervals
     if (max_wait_seconds == 0) max_wait_seconds = INT_MAX;
     while (waited < max_wait_seconds) {
-        char *current_url = web_get_url(ctx);
+        char *current_url = NULL;
+        web_get_url(ctx, &current_url);
         if (current_url != NULL && strlen(current_url) > 0) {
             free(current_url);
             return 0; // Page loaded
@@ -41,84 +30,81 @@ int wait_to_page_load(web_context *ctx, int max_wait_seconds) {
     return -1; // Timeout
 }
 
-/**
- * \brief Get current URL
- * \param ctx web context
- * \return current URL (as a pointer)
- */
-char *web_get_url(web_context *ctx) {
+int web_get_url(web_context *ctx, char **url) {
     cJSON *response_json = NULL;
-    RCS(ctx, "/url", NULL, &response_json, WEB_GET);
-    DEBUG_JSON(response_json);
+    int resp = RCS(ctx, "/url", NULL, &response_json, WEB_GET);
+    DEBUG_JSON(response_json)
+    if (resp < 0) {
+        *url = NULL;
+        return resp;
+    }
 
     cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
     if (!cJSON_IsString(value) || (value->valuestring == NULL)) {
         DEBUG("current URL not found in response");
         cJSON_Delete(response_json);
-        return NULL;
+        web_error err = {
+            .code = -1,
+            .path = strdup("/url"),
+            .error = strdup("no such url"),
+            .message = strdup("Could not retrieve current URL from the browser."),
+        };
+        web_set_last_error(ctx, err);
+        return -1;
     }
     char *current_url = strdup(value->valuestring);
     cJSON_Delete(response_json);
 
     DEBUG("extracted current_url='%s'", current_url);
-    return current_url;
+    return resp;
 }
 
-/**
- * \brief Navigate back in browser history
- * \param ctx web context
- * \return 0=ok
- */
 int web_back(web_context *ctx) {
     cJSON *response_json = NULL;
-    RCS(ctx, "/back", NULL, &response_json, WEB_POST);
+    int resp = RCS(ctx, "/back", NULL, &response_json, WEB_POST);
     DEBUG_JSON(response_json);
-    return 0;
+    return resp;
 }
 
-/**
- * \brief Navigate forward in browser history
- * \param ctx web context
- * \return 0=ok
- */
 int web_forward(web_context *ctx) {
     cJSON *response_json = NULL;
-    RCS(ctx, "/forward", NULL, &response_json, WEB_POST);
+    int resp = RCS(ctx, "/forward", NULL, &response_json, WEB_POST);
     DEBUG_JSON(response_json);
-    return 0;
+    return resp;
 }
 
-/**
- * \brief Refresh current page
- * \param ctx web context
- * \return 0=ok
- */
 int web_refresh(web_context *ctx) {
     cJSON *response_json = NULL;
-    RCS(ctx, "/refresh", NULL, &response_json, WEB_POST);
+    int resp = RCS(ctx, "/refresh", NULL, &response_json, WEB_POST);
     DEBUG_JSON(response_json);
-    return 0;
+    return resp;
 }
 
-/**
- * \brief Get current page title
- * \param ctx web context
- * \return current page title (as a pointer)
- */
-char *web_get_title(web_context *ctx) {
+int web_get_title(web_context *ctx, char **title) {
     cJSON *response_json = NULL;
-    RCS(ctx, "/title", NULL, &response_json, WEB_GET);
+    int resp = RCS(ctx, "/title", NULL, &response_json, WEB_GET);
     DEBUG_JSON(response_json);
+    if (resp < 0) {
+        *title = NULL;
+        return resp;
+    }
 
     cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
     if (!cJSON_IsString(value) || (value->valuestring == NULL)) {
         DEBUG("page title not found in response");
         cJSON_Delete(response_json);
-        return NULL;
+        web_error err = {
+            .code = -1,
+            .path = strdup("/title"),
+            .error = strdup("no such title"),
+            .message = strdup("Could not retrieve page title from the browser."),
+        };
+        web_set_last_error(ctx, err);
+        return -1;
     }
-    char *title = strdup(value->valuestring);
+    *title = strdup(value->valuestring);
     cJSON_Delete(response_json);
 
     DEBUG("extracted title='%s'", title);
-    return title;
+    return resp;
 }

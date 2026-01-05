@@ -55,11 +55,43 @@ typedef struct {
  * \return \b 0 = success \n\b -1 = empty path \n\b -2 = file not found \n\b -3 = not executable \n\b -4 = command failed \n\b -5 = startup error \n\b -6 = log file read error
  */
 int web_init(web_context *ctx, char *geckodriverPath, char *firefoxPath, int port, int force_kill);
+/**
+ * \brief Close web context
+ * \param ctx web context to close
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
 int web_close(web_context *ctx);
+/**
+ * \brief Sleep for a given number of microseconds
+ * \param microseconds number of microseconds to sleep
+ * \return 0 on success, -1 on failure
+ */
 int web_usleep(int microseconds);
+/**
+ * \brief Reset web context
+ * \param ctx web context to reset
+ */
 void web_reset_context(web_context *ctx);
-web_status web_get_status(web_context *ctx);
-web_timeouts web_get_timeouts(web_context *ctx);
+/**
+ * \brief Get web status
+ * \param ctx web context
+ * \param status pointer to web status to fill
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
+int web_get_status(web_context *ctx, web_status *status);
+/**
+ * \brief Get web timeouts
+ * \param ctx web context
+ * \param timeouts pointer to web timeouts to fill
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
+int web_get_timeouts(web_context *ctx, web_timeouts *timeouts);
+/**
+ * \brief Set web timeouts
+ * \param ctx web context
+ * \param timeouts web timeouts to set
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
 int web_set_timeouts(web_context *ctx, web_timeouts timeouts);
 /**
  * \brief Create a new web session

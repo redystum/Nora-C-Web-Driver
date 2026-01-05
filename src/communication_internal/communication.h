@@ -20,8 +20,35 @@ typedef enum {
 } web_request_method;
 
 size_t write_callback(void *ptr, size_t size, size_t nmemb, void *userdata);
+/**
+ * \brief Run a curl request
+ * \param ctx web context
+ * \param path request path
+ * \param data request data
+ * \param response_json output response JSON
+ * \param method request method
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
 int run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, web_request_method method);
+/**
+ * \brief Run a curl request for a session
+ * \param ctx web context
+ * \param path request path
+ * \param data request data
+ * \param response output response JSON
+ * \param method request method
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
 #define RCS(ctx, path, data, response, method) run_curl_session(ctx, path, data, response, method)
+/**
+ * \brief Run a curl request for a session
+ * \param ctx web context
+ * \param path request path
+ * \param data request data
+ * \param response output response JSON
+ * \param method request method
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
 int run_curl_session(web_context *ctx, char *path, char *data, cJSON **response, web_request_method method);
 /**
  * \brief Validate if executable exists and is executable
