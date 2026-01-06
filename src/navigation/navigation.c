@@ -18,7 +18,12 @@ int wait_to_page_load(web_context *ctx, int max_wait_seconds) {
     if (max_wait_seconds == 0) max_wait_seconds = INT_MAX;
     while (waited < max_wait_seconds) {
         char *current_url = NULL;
-        web_get_url(ctx, &current_url);
+        int status = web_get_url(ctx, &current_url);
+        DEBUG("current_url='%s', status=%d", current_url, status);
+        if (status < 0) {
+            if (current_url != NULL) free(current_url);
+            continue;
+        }
         if (current_url != NULL && strlen(current_url) > 0) {
             free(current_url);
             return 0; // Page loaded
@@ -33,7 +38,7 @@ int wait_to_page_load(web_context *ctx, int max_wait_seconds) {
 int web_get_url(web_context *ctx, char **url) {
     cJSON *response_json = NULL;
     int resp = RCS(ctx, "/url", NULL, &response_json, WEB_GET);
-    DEBUG_JSON(response_json)
+    DEBUG_JSON(response_json);
     if (resp < 0) {
         *url = NULL;
         return resp;
@@ -52,10 +57,10 @@ int web_get_url(web_context *ctx, char **url) {
         web_set_last_error(ctx, err);
         return -1;
     }
-    char *current_url = strdup(value->valuestring);
+    *url = strdup(value->valuestring);
     cJSON_Delete(response_json);
 
-    DEBUG("extracted current_url='%s'", current_url);
+    DEBUG("extracted current_url='%s'", url);
     return resp;
 }
 

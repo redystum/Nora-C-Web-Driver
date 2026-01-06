@@ -85,8 +85,8 @@ int web_get_timeouts(web_context *ctx, web_timeouts *timeouts) {
     timeouts->implicit_wait_ms = cJSON_GetObjectItemCaseSensitive(value, "implicit")->valueint;
     cJSON_Delete(response_json);
 
-    DEBUG("Got timeouts: script=%d ms, pageLoad=%d ms, implicit=%d ms", timeouts.script_ms, timeouts.page_load_ms,
-          timeouts.implicit_wait_ms);
+    DEBUG("Got timeouts: script=%d ms, pageLoad=%d ms, implicit=%d ms", timeouts->script_ms, timeouts->page_load_ms,
+          timeouts->implicit_wait_ms);
     return resp;
 }
 
@@ -126,7 +126,7 @@ int web_get_status(web_context *ctx, web_status *status) {
     status->message = strdup(cJSON_GetObjectItemCaseSensitive(value, "message")->valuestring);
     cJSON_Delete(response_json);
 
-    DEBUG("Got status: ready='%s', message='%s'", status.ready, status.message);
+    DEBUG("Got status: ready='%s', message='%s'", status->ready, status->message);
     return resp;
 }
 

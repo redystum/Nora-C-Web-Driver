@@ -24,8 +24,6 @@ int main(int argc, char *argv[]) {
     printf("%i\n", port);
     printf("------\n");
 
-    gecko = "/usr/local/bin/geckodriver";
-
     web_context ctx;
     int r = web_init(&ctx, gecko, firefox, port, 1);
     if (r < 0) {
@@ -45,21 +43,27 @@ int main(int argc, char *argv[]) {
 
     web_navigate_to(&ctx, "http://localhost/simple.html");
 
+    INFO("Waiting for page to load...");
     wait_to_page_load(&ctx, 0);
+    INFO("Page loaded.");
 
-    char *current_url = web_get_url(&ctx);
+    char *current_url;
+    web_get_url(&ctx, &current_url);
     printf("Current URL: %s\n", current_url);
     free(current_url);
 
     INFO("\n\n\n\n------ WINDOW TESTS -----");
 
-    char* window1 = web_get_window(&ctx);
+    char* window1;
+    web_get_window(&ctx, &window1);
     printf("Current Window Handle: %s\n", window1);
 
-    char *window2 = web_new_window(&ctx);
-    sleep(5);
+    char *window2;
+    web_new_window(&ctx, &window2);
+    sleep(2);
     web_switch_to_window(&ctx, window2);
-    sleep(5);
+    sleep(1);
+    web_new_window(&ctx, NULL);
 
     /*
     char **handles = web_get_window_handles(&ctx);
