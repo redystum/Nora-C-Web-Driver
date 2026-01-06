@@ -6,7 +6,7 @@
 /**
  * \brief Navigate to a URL
  * \param ctx web context
- * \param url URL to navigate to
+ * \param url URL to navigate to (or NULL for about:blank)
  * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
  */
 int web_navigate_to(web_context *ctx, char *url);
@@ -45,7 +45,7 @@ int web_get_title(web_context *ctx, char **title);
 /**
  * \brief Wait for page to load completely
  * \param ctx web context
- * \param max_wait_seconds maximum wait time in seconds (0 for default)
+ * \param max_wait_seconds maximum wait time in seconds (0 for infinite)
  * \return \b 0 — Page loaded successfully \n\b -1 — Timeout or Error
  */
 int wait_to_page_load(web_context *ctx, int max_wait_seconds);

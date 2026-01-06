@@ -28,7 +28,7 @@ int web_init(web_context *ctx, char *geckodriverPath, char *firefoxPath, int por
     ctx->last_error = (web_error){0, NULL, NULL, NULL};
 
     DEBUG("--------\ngeckodriverPath='%s', firefoxPath='%s', port=%d\n--------",
-          ctx->geckodriverPath, ctx->firefoxPath,  ctx->port);
+          ctx->geckodriverPath, ctx->firefoxPath, ctx->port);
 
     int err = 0;
     if ((err = gecko_run(ctx, force_kill)) < 0) {
@@ -73,20 +73,24 @@ int web_get_timeouts(web_context *ctx, web_timeouts *timeouts) {
     int resp = RCS(ctx, "/timeouts", NULL, &response_json, WEB_GET);
     DEBUG_JSON(response_json);
     if (resp < 0) {
-        timeouts->script_ms = -1;
-        timeouts->page_load_ms = -1;
-        timeouts->implicit_wait_ms = -1;
+        if (timeouts != NULL) {
+            timeouts->script_ms = -1;
+            timeouts->page_load_ms = -1;
+            timeouts->implicit_wait_ms = -1;
+        }
         return resp;
     }
 
-    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
-    timeouts->script_ms = cJSON_GetObjectItemCaseSensitive(value, "script")->valueint;
-    timeouts->page_load_ms = cJSON_GetObjectItemCaseSensitive(value, "pageLoad")->valueint;
-    timeouts->implicit_wait_ms = cJSON_GetObjectItemCaseSensitive(value, "implicit")->valueint;
-    cJSON_Delete(response_json);
+    if (timeouts != NULL) {
+        cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+        timeouts->script_ms = cJSON_GetObjectItemCaseSensitive(value, "script")->valueint;
+        timeouts->page_load_ms = cJSON_GetObjectItemCaseSensitive(value, "pageLoad")->valueint;
+        timeouts->implicit_wait_ms = cJSON_GetObjectItemCaseSensitive(value, "implicit")->valueint;
+        DEBUG("Got timeouts: script=%d ms, pageLoad=%d ms, implicit=%d ms", timeouts->script_ms, timeouts->page_load_ms,
+              timeouts->implicit_wait_ms);
+    }
 
-    DEBUG("Got timeouts: script=%d ms, pageLoad=%d ms, implicit=%d ms", timeouts->script_ms, timeouts->page_load_ms,
-          timeouts->implicit_wait_ms);
+    cJSON_Delete(response_json);
     return resp;
 }
 
@@ -116,17 +120,21 @@ int web_get_status(web_context *ctx, web_status *status) {
     int resp = RCS(ctx, "/status", NULL, &response_json, WEB_GET);
     DEBUG_JSON(response_json);
     if (resp < 0) {
-        status->ready = NULL;
-        status->message = NULL;
+        if (status != NULL) {
+            status->ready = NULL;
+            status->message = NULL;
+        }
         return resp;
     }
 
-    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
-    status->ready = cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(value, "ready"));
-    status->message = strdup(cJSON_GetObjectItemCaseSensitive(value, "message")->valuestring);
-    cJSON_Delete(response_json);
+    if (status == NULL) {
+        cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+        status->ready = cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(value, "ready"));
+        status->message = strdup(cJSON_GetObjectItemCaseSensitive(value, "message")->valuestring);
+        DEBUG("Got status: ready='%s', message='%s'", status->ready, status->message);
+    }
 
-    DEBUG("Got status: ready='%s', message='%s'", status->ready, status->message);
+    cJSON_Delete(response_json);
     return resp;
 }
 
@@ -140,30 +148,33 @@ int web_create_session(web_context *ctx, web_session *session) {
     cJSON *response = NULL;
 
     int resp = run_curl(ctx, "/session",
-          "{\"capabilities\": {\"alwaysMatch\": {\"browserName\": \"firefox\"}}}",
-          &response, WEB_POST);
+                        "{\"capabilities\": {\"alwaysMatch\": {\"browserName\": \"firefox\"}}}",
+                        &response, WEB_POST);
 
     DEBUG("Create session status: %d", resp);
 
     if (resp < 0) {
-        session->id = NULL;
-        session->capabilities = NULL;
+        if (session != NULL) {
+            session->id = NULL;
+            session->capabilities = NULL;
+        }
         return resp;
     }
 
     DEBUG_JSON(response);
 
-    cJSON *val = cJSON_GetObjectItem(response, "value");
-    DEBUG_JSON(val);
+    if (session != NULL) {
+        cJSON *val = cJSON_GetObjectItem(response, "value");
+        DEBUG_JSON(val);
 
-    session->id = strdup(cJSON_GetObjectItem(val, "sessionId")->valuestring);
-    DEBUG("session id='%s'", session->id);
-    session->capabilities = cJSON_Duplicate(cJSON_GetObjectItem(val, "capabilities"), true);
-    DEBUG("capabilities='%s'", cJSON_Print(session->capabilities));
+        session->id = strdup(cJSON_GetObjectItem(val, "sessionId")->valuestring);
+        DEBUG("session id='%s'", session->id);
+        session->capabilities = cJSON_Duplicate(cJSON_GetObjectItem(val, "capabilities"), true);
+        DEBUG("capabilities='%s'", cJSON_Print(session->capabilities));
+        DEBUG("Created session with id='%s'", session->id);
+    }
+
     cJSON_Delete(response);
-
-    DEBUG("Created session with id='%s'", session->id);
-
     return resp;
 }
 
