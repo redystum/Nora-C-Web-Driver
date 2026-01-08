@@ -93,6 +93,24 @@ int run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, we
             response_json = NULL;
             cJSON *resp = cJSON_Parse(raw_buf);
             curl_easy_cleanup(curl);
+
+            if (!resp) {
+                web_error err = {0};
+                err.code = http_code;
+                err.path = strdup(url);
+                if (http_code == -405) {
+                    DEBUG("Method Not Allowed (405) error without JSON body");
+                    err.error = strdup("Method not allowed");
+                    err.message = strdup("The requested HTTP method is not allowed for the given URL.");
+                } else {
+                    DEBUG("Failed to parse error response JSON");
+                    err.error = strdup("Unexpected error");
+                    err.message = strdup(raw_buf);
+                }
+                web_set_last_error(ctx, err);
+                return http_code;
+            }
+
             cJSON *error_info = cJSON_GetObjectItemCaseSensitive(resp, "value");
             web_error err = {0};
             err.code = http_code;

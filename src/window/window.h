@@ -43,7 +43,7 @@ int web_switch_to_tab(web_context *ctx, char *handle);
  * \param handles output array of window handles, NULL-terminated
  * \return \b int — number of handles \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
  */
-int web_get_window_handles(web_context *ctx, char **handles);
+int web_get_window_handles(web_context *ctx, char ***handles);
 /***
  * \brief Create a new window
  * \param ctx web context

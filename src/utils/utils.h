@@ -31,24 +31,24 @@
  * \param fmt format string
  * \param ... ...
  */
-#define DEBUG(...) debug(__FILE__, __LINE__, __func__, __VA_ARGS__)
+#define DEBUG(...) debug(__FILE__, __LINE__, __func__, __VA_ARGS__);
 /**
  * \brief Prints a cJSON object for debugging
  * \param json  the cJSON object to debug
  */
-#define DEBUG_JSON(json) debug_json(json, __FILE__, __LINE__, __func__)
+#define DEBUG_JSON(json) debug_json(json, __FILE__, __LINE__, __func__);
 #else
 /**
  * \brief Prints a debug message if DEBUG_ENABLED is defined
  * \param fmt format string
  * \param ... ...
  */
-#define DEBUG(...)
+#define DEBUG(...);
 /**
  * \brief Prints a cJSON object for debugging
  * \param json  the cJSON object to debug
  */
-#define DEBUG_JSON(json)
+#define DEBUG_JSON(json);
 #endif
 
 /**

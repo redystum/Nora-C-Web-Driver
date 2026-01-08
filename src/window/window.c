@@ -50,60 +50,65 @@ int web_set_window_rect(web_context *ctx, web_window_rect rect) {
 }
 
 int web_maximize_window(web_context *ctx, web_window_rect *rect) {
-    if (ctx == NULL || rect == NULL) return -1;
-
     cJSON *response_json = NULL;
     int resp = RCS(ctx, "/window/maximize", NULL, &response_json, WEB_POST);
     DEBUG_JSON(response_json);
+    if (resp < 0) {
+        return resp;
+    }
 
-    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
-
-    rect->x = cJSON_GetObjectItemCaseSensitive(value, "x")->valueint;
-    rect->y = cJSON_GetObjectItemCaseSensitive(value, "y")->valueint;
-    rect->width = cJSON_GetObjectItemCaseSensitive(value, "width")->valueint;
-    rect->height = cJSON_GetObjectItemCaseSensitive(value, "height")->valueint;
+    if (rect != NULL) {
+        cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+        rect->x = cJSON_GetObjectItemCaseSensitive(value, "x")->valueint;
+        rect->y = cJSON_GetObjectItemCaseSensitive(value, "y")->valueint;
+        rect->width = cJSON_GetObjectItemCaseSensitive(value, "width")->valueint;
+        rect->height = cJSON_GetObjectItemCaseSensitive(value, "height")->valueint;
+        DEBUG("Maximized window rect: x=%d, y=%d, width=%d, height=%d", rect->x, rect->y, rect->width, rect->height);
+    }
 
     cJSON_Delete(response_json);
-
-    DEBUG("Maximized window rect: x=%d, y=%d, width=%d, height=%d", rect->x, rect->y, rect->width, rect->height);
     return resp;
 }
 
 int web_minimize_window(web_context *ctx, web_window_rect *rect) {
-    if (ctx == NULL || rect == NULL) return -1;
-
     cJSON *response_json = NULL;
     int resp = RCS(ctx, "/window/minimize", NULL, &response_json, WEB_POST);
     DEBUG_JSON(response_json);
-    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+    if (resp < 0) {
+        return resp;
+    }
 
-    rect->x = cJSON_GetObjectItemCaseSensitive(value, "x")->valueint;
-    rect->y = cJSON_GetObjectItemCaseSensitive(value, "y")->valueint;
-    rect->width = cJSON_GetObjectItemCaseSensitive(value, "width")->valueint;
-    rect->height = cJSON_GetObjectItemCaseSensitive(value, "height")->valueint;
+    if (rect != NULL) {
+        cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+        rect->x = cJSON_GetObjectItemCaseSensitive(value, "x")->valueint;
+        rect->y = cJSON_GetObjectItemCaseSensitive(value, "y")->valueint;
+        rect->width = cJSON_GetObjectItemCaseSensitive(value, "width")->valueint;
+        rect->height = cJSON_GetObjectItemCaseSensitive(value, "height")->valueint;
+        DEBUG("Minimized window rect: x=%d, y=%d, width=%d, height=%d", rect->x, rect->y, rect->width, rect->height);
+    }
 
     cJSON_Delete(response_json);
-
-    DEBUG("Minimized window rect: x=%d, y=%d, width=%d, height=%d", rect->x, rect->y, rect->width, rect->height);
     return resp;
 }
 
 int web_fullscreen_window(web_context *ctx, web_window_rect *rect) {
-    if (ctx == NULL || rect == NULL) return -1;
-
     cJSON *response_json = NULL;
     int resp = RCS(ctx, "/window/fullscreen", NULL, &response_json, WEB_POST);
     DEBUG_JSON(response_json);
-    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+    if (resp < 0) {
+        return resp;
+    }
 
-    rect->x = cJSON_GetObjectItemCaseSensitive(value, "x")->valueint;
-    rect->y = cJSON_GetObjectItemCaseSensitive(value, "y")->valueint;
-    rect->width = cJSON_GetObjectItemCaseSensitive(value, "width")->valueint;
-    rect->height = cJSON_GetObjectItemCaseSensitive(value, "height")->valueint;
+    if (rect != NULL) {
+        cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+        rect->x = cJSON_GetObjectItemCaseSensitive(value, "x")->valueint;
+        rect->y = cJSON_GetObjectItemCaseSensitive(value, "y")->valueint;
+        rect->width = cJSON_GetObjectItemCaseSensitive(value, "width")->valueint;
+        rect->height = cJSON_GetObjectItemCaseSensitive(value, "height")->valueint;
+        DEBUG("Fullscreen window rect: x=%d, y=%d, width=%d, height=%d", rect->x, rect->y, rect->width, rect->height);
+    }
 
     cJSON_Delete(response_json);
-
-    DEBUG("Fullscreen window rect: x=%d, y=%d, width=%d, height=%d", rect->x, rect->y, rect->width, rect->height);
     return resp;
 }
 
@@ -147,7 +152,7 @@ int web_switch_to_tab(web_context *ctx, char *handle) {
     return web_switch_to_window(ctx, handle);
 }
 
-int web_get_window_handles(web_context *ctx, char **handles) {
+int web_get_window_handles(web_context *ctx, char ***handles) {
     if (handles == NULL) return -1;
 
     cJSON *response_json = NULL;
@@ -159,13 +164,19 @@ int web_get_window_handles(web_context *ctx, char **handles) {
     }
 
     cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+    DEBUG_JSON(value)
     int count = cJSON_GetArraySize(value);
-    handles = malloc((count + 1) * sizeof(char *));
+    char **handle_ = malloc((count + 1) * sizeof(char *));
+    DEBUG("Number of window handles: %d", count);
     for (int i = 0; i < count; i++) {
         cJSON *item = cJSON_GetArrayItem(value, i);
-        handles[i] = strdup(item->valuestring);
+        DEBUG_JSON(item)
+        handle_[i] = strdup(item->valuestring);
     }
-    handles[count] = NULL;
+    handle_[count] = NULL;
+    DEBUG("321321321321321312")
+    *handles = handle_;
+    DEBUG("Finished getting window handles")
     cJSON_Delete(response_json);
     return count;
 }

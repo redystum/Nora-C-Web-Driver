@@ -117,7 +117,7 @@ int web_set_timeouts(web_context *ctx, web_timeouts timeouts) {
 
 int web_get_status(web_context *ctx, web_status *status) {
     cJSON *response_json = NULL;
-    int resp = RCS(ctx, "/status", NULL, &response_json, WEB_GET);
+    int resp = run_curl(ctx, "/status", "{}", &response_json, WEB_GET);
     DEBUG_JSON(response_json);
     if (resp < 0) {
         if (status != NULL) {
@@ -127,7 +127,7 @@ int web_get_status(web_context *ctx, web_status *status) {
         return resp;
     }
 
-    if (status == NULL) {
+    if (status != NULL) {
         cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
         status->ready = cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(value, "ready"));
         status->message = strdup(cJSON_GetObjectItemCaseSensitive(value, "message")->valuestring);
