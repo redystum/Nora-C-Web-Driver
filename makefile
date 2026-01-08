@@ -27,8 +27,11 @@ MODULE_SRCS := $(wildcard src/*/*.c)
 # 2. Define the Main sources (root directory files)
 MAIN_SRCS := main.c $(PROGRAM_OPT).c
 
-# 3. Combine them
-ALL_SRCS := $(MAIN_SRCS) $(MODULE_SRCS)
+# 3. Find all .c files inside tests/
+TEST_SRCS := $(wildcard tests/*.c)
+
+# 4. Combine them
+ALL_SRCS := $(MAIN_SRCS) $(MODULE_SRCS) $(TEST_SRCS)
 
 # 4. Convert .c filenames to .o filenames inside the BUILD_DIR
 #    Example: src/core/web_core.c -> build/src/core/web_core.o
