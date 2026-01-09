@@ -35,8 +35,15 @@ int web_get_element_shadow_root(web_context *ctx, char *element_id, char **shado
  * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
  */
 int web_find_element(web_context *ctx, web_element_location_strategy strategy, char *selector, char **element_id);
-
-void web_find_elements(void);
+/**
+ * \brief Find multiple elements on the page
+ * \param ctx web context
+ * \param strategy location strategy
+ * \param selector selector string
+ * \param elements_id output array of element IDs, NULL-terminated
+ * \return \b int — number of elements \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
+int web_find_elements(web_context *ctx, web_element_location_strategy strategy, char *selector, char ***elements_id);
 
 void web_find_element_from_element(void);
 

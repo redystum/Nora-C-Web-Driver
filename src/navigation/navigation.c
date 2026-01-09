@@ -18,7 +18,7 @@ int web_navigate_to(web_context *ctx, char *url) {
 
 int wait_to_page_load(web_context *ctx, int max_wait_seconds) {
     int waited = 0;
-    max_wait_seconds = max_wait_seconds * 2; // .5 second intervals
+    max_wait_seconds = max_wait_seconds * 10; // convert to 0.1 second units
     if (max_wait_seconds == 0) max_wait_seconds = INT_MAX;
     while (waited < max_wait_seconds) {
         char *current_url = NULL;
@@ -33,7 +33,7 @@ int wait_to_page_load(web_context *ctx, int max_wait_seconds) {
             return 0; // Page loaded
         }
         free(current_url);
-        web_usleep(500000); // 0.5 second
+        web_usleep(100000); // 0.1 second
         waited++;
     }
     return -1; // Timeout

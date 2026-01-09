@@ -230,7 +230,7 @@ int gecko_run(web_context *ctx, int force_kill) {
         return -4;
     }
 
-    web_usleep(500000 * 2);
+    web_usleep(500000);
 
     FILE *fp = fopen(log_file, "r");
     if (fp) {
@@ -285,7 +285,7 @@ int wait_for_gecko_ready(web_context *ctx) {
         int status = web_create_session(ctx, &session);
         if (status < 0) {
             DEBUG("web_create_session failed with status %d", status);
-            sleep(1);
+            web_usleep(500000); // 0.5 second
             retry++;
             continue;
         }
@@ -299,7 +299,7 @@ int wait_for_gecko_ready(web_context *ctx) {
 
         DEBUG("waiting for geckodriver to be ready... (%d/%d)", retry + 1, max_retries);
         if (response) cJSON_Delete(response);
-        sleep(1);
+        web_usleep(500000); // 0.5 second
         retry++;
     }
 

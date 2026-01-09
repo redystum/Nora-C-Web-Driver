@@ -26,8 +26,23 @@ void test_elements(web_context *ctx) {
 
     test_get_element(ctx);
 
-
-
+    char **elements_id;
+    r = web_find_elements(ctx, CSS_SELECTOR, ".btn.secondary", &elements_id);
+    if (r < 0) {
+        print_error(ctx);
+        WARNING("web_find_elements failed with code %d", r);
+    } else {
+        if (r == 0) {
+            WARNING("No elements found with the given selector");
+        } else {
+            printf("Found multiple elements:\n");
+            for (int i = 0; elements_id[i] != NULL; i++) {
+                printf(" Element ID[%d]: %s\n", i, elements_id[i]);
+                free(elements_id[i]);
+            }
+            free(elements_id);
+        }
+    }
 }
 
 void test_get_element(web_context *ctx) {
@@ -96,5 +111,4 @@ void test_get_element(web_context *ctx) {
     printf("Element Text (tag): %s\n", element_text);
     free(element_text);
     free(active_element);
-
 }

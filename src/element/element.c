@@ -104,6 +104,70 @@ int web_find_element(web_context *ctx, web_element_location_strategy strategy, c
     return resp;
 }
 
+int web_find_elements(web_context *ctx, web_element_location_strategy strategy, char *selector, char ***elements_id) {
+    if (ctx == NULL || selector == NULL) {
+        return -1;
+    }
+
+    const char *using_str;
+    switch (strategy) {
+        case CSS_SELECTOR:
+            using_str = "css selector";
+            break;
+        case LINK_TEXT_SELECTOR:
+            using_str = "link text";
+            break;
+        case PARTIAL_LINK_TEXT_SELECTOR:
+            using_str = "partial link text";
+            break;
+        case TAG_NAME:
+            using_str = "tag name";
+            break;
+        case XPATH_SELECTOR:
+            using_str = "xpath";
+            break;
+        default:
+            return -1;
+    }
+
+    cJSON *request_json = cJSON_CreateObject();
+    cJSON_AddStringToObject(request_json, "using", using_str);
+    cJSON_AddStringToObject(request_json, "value", selector);
+
+    char *request_str = cJSON_PrintUnformatted(request_json);
+    cJSON_Delete(request_json);
+
+    cJSON *response_json = NULL;
+    int resp = RCS(ctx, "/elements", request_str, &response_json, WEB_POST);
+    DEBUG_JSON(response_json);
+    free(request_str);
+
+    if (resp < 0) {
+        if (elements_id != NULL)
+            *elements_id = NULL;
+        return resp;
+    }
+
+    int count = 0;
+    if (elements_id != NULL) {
+        cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+        char **ids = NULL;
+        count = cJSON_GetArraySize(value);
+        ids = malloc((count + 1) * sizeof(char *));
+        for (int i = 0; i < count; i++) {
+            cJSON *elem = cJSON_GetArrayItem(value, i);
+            char *val = cJSON_GetObjectItemCaseSensitive(elem, "element-6066-11e4-a52e-4f735466cecf")->valuestring;
+            ids[i] = strdup(val);
+            DEBUG("Found element ID[%d]: %s", i, ids[i]);
+        }
+        ids[count] = NULL;
+        *elements_id = ids;
+    }
+
+    cJSON_Delete(response_json);
+    return count;
+}
+
 
 
 

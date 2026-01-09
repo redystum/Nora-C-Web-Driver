@@ -66,7 +66,6 @@ int main(int argc, char *argv[]) {
     test_timeouts(&ctx);
 
     INFO("DONE");
-    sleep(5);
 
     r = web_close(&ctx);
     if (r < 0) {
