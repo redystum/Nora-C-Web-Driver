@@ -45,9 +45,9 @@ int web_find_element(web_context *ctx, web_element_location_strategy strategy, c
  */
 int web_find_elements(web_context *ctx, web_element_location_strategy strategy, char *selector, char ***elements_id);
 
-void web_find_element_from_element(void);
+int web_find_element_from_element(web_context *ctx, web_element_location_strategy strategy, char *selector, char *element_id_src, char **elements_id);
 
-void web_find_elements_from_element(void);
+int web_find_elements_from_element(web_context *ctx, web_element_location_strategy strategy, char *selector, char *element_id_src, char ***elements_id);
 
 void web_find_element_from_shadow_root(void);
 

@@ -43,6 +43,40 @@ void test_elements(web_context *ctx) {
             free(elements_id);
         }
     }
+
+
+    char *div;
+    r = web_find_element(ctx, CSS_SELECTOR, "#basic-selection", &div);
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_find_element failed with code %d", r);
+    }
+
+    r = web_find_element_from_element(ctx, TAG_NAME, "p", div,&active_element);
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_find_element_from_element failed with code %d", r);
+    }
+    printf("Found Element from Element ID: %s\n", active_element);
+    free(active_element);
+
+    r = web_find_elements_from_element(ctx, TAG_NAME, "button", div, &elements_id);
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_find_elements_from_element failed with code %d", r);
+    } else {
+        if (r == 0) {
+            WARNING("No elements found with the given selector from element");
+        } else {
+            printf("Found multiple elements from element:\n");
+            for (int i = 0; elements_id[i] != NULL; i++) {
+                printf(" Element ID[%d]: %s\n", i, elements_id[i]);
+                free(elements_id[i]);
+            }
+            free(elements_id);
+        }
+    }
+    free(div);
 }
 
 void test_get_element(web_context *ctx) {

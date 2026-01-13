@@ -46,13 +46,11 @@ int web_get_element_shadow_root(web_context *ctx, char *element_id, char **shado
 
     cJSON_Delete(response_json);
     return resp;
-
 }
 
-int web_find_element(web_context *ctx, web_element_location_strategy strategy, char *selector, char **element_id) {
-    if (ctx == NULL || selector == NULL) {
-        return -1;
-    }
+// Common logic for finding elements
+int web_find_element_logic(web_context *ctx, web_element_location_strategy strategy, char *selector,
+                           char *element_id_src, char ***elements_id, int multiple) {
 
     const char *using_str;
     switch (strategy) {
@@ -83,24 +81,83 @@ int web_find_element(web_context *ctx, web_element_location_strategy strategy, c
     cJSON_Delete(request_json);
 
     cJSON *response_json = NULL;
-    int resp = RCS(ctx, "/element", request_str, &response_json, WEB_POST);
+    int resp = 0;
+    int count = 0;
+    char endpoint[256];
+    if (multiple) {
+        if (element_id_src != NULL) {
+            snprintf(endpoint, sizeof(endpoint), "/element/%s/elements", element_id_src);
+            resp = RCS(ctx, endpoint, request_str, &response_json, WEB_POST);
+        } else {
+            resp = RCS(ctx, "/elements", request_str, &response_json, WEB_POST);
+        }
+
+        if (resp < 0) {
+            return resp;
+        }
+
+        if (elements_id != NULL) {
+            cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+            char **ids = NULL;
+            count = cJSON_GetArraySize(value);
+            ids = malloc((count + 1) * sizeof(char *));
+            for (int i = 0; i < count; i++) {
+                cJSON *elem = cJSON_GetArrayItem(value, i);
+                char *val = cJSON_GetObjectItemCaseSensitive(elem, "element-6066-11e4-a52e-4f735466cecf")->valuestring;
+                ids[i] = strdup(val);
+                DEBUG("Found element ID[%d]: %s", i, ids[i]);
+            }
+            ids[count] = NULL;
+            *elements_id = ids;
+        }
+    } else {
+        if (element_id_src != NULL) {
+            snprintf(endpoint, sizeof(endpoint), "/element/%s/element", element_id_src);
+            resp = RCS(ctx, endpoint, request_str, &response_json, WEB_POST);
+        } else {
+            resp = RCS(ctx, "/element", request_str, &response_json, WEB_POST);
+        }
+
+        if (resp < 0) {
+            if (elements_id != NULL)
+                *elements_id = NULL;
+            return resp;
+        }
+
+        cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+        char *val = cJSON_GetObjectItemCaseSensitive(value, "element-6066-11e4-a52e-4f735466cecf")->valuestring;
+
+        *elements_id = malloc(2 * sizeof(char *));
+        (*elements_id)[0] = strdup(val);
+        (*elements_id)[1] = NULL;
+
+        DEBUG("Found element ID: %s", val);
+    }
     DEBUG_JSON(response_json);
     free(request_str);
 
+    cJSON_Delete(response_json);
+
+    return count;
+}
+
+int web_find_element(web_context *ctx, web_element_location_strategy strategy, char *selector, char **element_id) {
+    if (ctx == NULL || selector == NULL) {
+        return -1;
+    }
+
+    char **elements_id = NULL;
+    int resp = web_find_element_logic(ctx, strategy, selector, NULL, &elements_id, 0);
     if (resp < 0) {
         if (element_id != NULL)
-        *element_id = NULL;
+            *element_id = NULL;
         return resp;
     }
 
     if (element_id != NULL) {
-        cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
-        char *val = cJSON_GetObjectItemCaseSensitive(value, "element-6066-11e4-a52e-4f735466cecf")->valuestring;
-        *element_id = strdup(val);
-        DEBUG("Found element ID: %s", *element_id);
+        *element_id = elements_id[0];
     }
-
-    cJSON_Delete(response_json);
+    free(elements_id);
     return resp;
 }
 
@@ -109,66 +166,48 @@ int web_find_elements(web_context *ctx, web_element_location_strategy strategy, 
         return -1;
     }
 
-    const char *using_str;
-    switch (strategy) {
-        case CSS_SELECTOR:
-            using_str = "css selector";
-            break;
-        case LINK_TEXT_SELECTOR:
-            using_str = "link text";
-            break;
-        case PARTIAL_LINK_TEXT_SELECTOR:
-            using_str = "partial link text";
-            break;
-        case TAG_NAME:
-            using_str = "tag name";
-            break;
-        case XPATH_SELECTOR:
-            using_str = "xpath";
-            break;
-        default:
-            return -1;
+    int count = web_find_element_logic(ctx, strategy, selector, NULL, elements_id, 1);
+    if (count < 0) {
+        if (elements_id != NULL)
+            *elements_id = NULL;
     }
 
-    cJSON *request_json = cJSON_CreateObject();
-    cJSON_AddStringToObject(request_json, "using", using_str);
-    cJSON_AddStringToObject(request_json, "value", selector);
+    return count;
+}
 
-    char *request_str = cJSON_PrintUnformatted(request_json);
-    cJSON_Delete(request_json);
+int web_find_element_from_element(web_context *ctx, web_element_location_strategy strategy, char *selector,
+                                  char *element_id_src, char **elements_id) {
+    if (ctx == NULL || selector == NULL || element_id_src == NULL) {
+        return -1;
+    }
 
-    cJSON *response_json = NULL;
-    int resp = RCS(ctx, "/elements", request_str, &response_json, WEB_POST);
-    DEBUG_JSON(response_json);
-    free(request_str);
-
+    char **found_elements = NULL;
+    int resp = web_find_element_logic(ctx, strategy, selector, element_id_src, &found_elements, 0);
     if (resp < 0) {
         if (elements_id != NULL)
             *elements_id = NULL;
         return resp;
     }
-
-    int count = 0;
     if (elements_id != NULL) {
-        cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
-        char **ids = NULL;
-        count = cJSON_GetArraySize(value);
-        ids = malloc((count + 1) * sizeof(char *));
-        for (int i = 0; i < count; i++) {
-            cJSON *elem = cJSON_GetArrayItem(value, i);
-            char *val = cJSON_GetObjectItemCaseSensitive(elem, "element-6066-11e4-a52e-4f735466cecf")->valuestring;
-            ids[i] = strdup(val);
-            DEBUG("Found element ID[%d]: %s", i, ids[i]);
-        }
-        ids[count] = NULL;
-        *elements_id = ids;
+        *elements_id = found_elements[0];
     }
-
-    cJSON_Delete(response_json);
-    return count;
+    free(found_elements);
+    return resp;
 }
 
+int web_find_elements_from_element(web_context *ctx, web_element_location_strategy strategy, char *selector,
+                                   char *element_id_src, char ***elements_id) {
+    if (ctx == NULL || selector == NULL || element_id_src == NULL) {
+        return -1;
+    }
 
+    int count = web_find_element_logic(ctx, strategy, selector, element_id_src, elements_id, 1);
+    if (count < 0) {
+        if (elements_id != NULL)
+            *elements_id = NULL;
+    }
+    return count;
+}
 
 
 int web_get_element_text(web_context *ctx, char *element_id, char **text) {
