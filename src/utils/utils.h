@@ -64,9 +64,9 @@
     if ((param) == NULL) {                           \
         web_error err = {                            \
             .code = -1,                              \
-            .message = #param " is NULL",            \
-            .error = "invalid argument",             \
-            .path = ""                               \
+            .message = strdup(#param " is NULL"),            \
+            .error = strdup("invalid argument"),             \
+            .path = NULL                             \
         };                                           \
         web_set_last_error(ctx, err);                \
         return -1;                                   \

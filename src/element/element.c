@@ -77,9 +77,9 @@ int web_find_element_logic(web_context *ctx, web_element_location_strategy strat
                 DEBUG("XPath selector is not supported in shadow roots");
                 web_error err = {
                     .code = -1,
-                    .message = "XPath selector is not supported in shadow roots",
-                    .error = "invalid argument",
-                    .path = ""
+                    .message = strdup("XPath selector is not supported in shadow roots"),
+                    .error = strdup("invalid argument"),
+                    .path = NULL
                 };
                 web_set_last_error(ctx, err);
                 return -1;
