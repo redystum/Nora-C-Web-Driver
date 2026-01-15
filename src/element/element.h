@@ -53,7 +53,7 @@ int web_find_elements(web_context *ctx, web_element_location_strategy strategy, 
  * \param elements_id output element ID
  * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
  */
-int web_find_element_from_element(web_context *ctx, web_element_location_strategy strategy, char *selector, char *element_id_src, char **elements_id);
+int web_find_element_from_element(web_context *ctx, web_element_location_strategy strategy, char *selector, char *element_id_src, char **element_id);
 /**
  * \brief Find multiple elements within another element
  * \param ctx web context
@@ -64,10 +64,26 @@ int web_find_element_from_element(web_context *ctx, web_element_location_strateg
  * \return \b int — number of elements \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
  */
 int web_find_elements_from_element(web_context *ctx, web_element_location_strategy strategy, char *selector, char *element_id_src, char ***elements_id);
-
-void web_find_element_from_shadow_root(void);
-
-void web_find_elements_from_shadow_root(void);
+/**
+ * \brief Find an element within a shadow root
+ * \param ctx web context
+ * \param strategy location strategy
+ * \param selector selector string, XPath not supported
+ * \param shadow_root_id shadow root ID
+ * \param element_id output element ID
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
+int web_find_element_from_shadow_root(web_context *ctx, web_element_location_strategy strategy, char *selector, char *shadow_root_id, char **element_id);
+/**
+ * \brief Find multiple elements within a shadow root
+ * \param ctx web context
+ * \param strategy location strategy
+ * \param selector selector string, XPath not supported
+ * \param shadow_root_id shadow root ID
+ * \param elements_id output array of element IDs, NULL-terminated
+ * \return \b int — number of elements \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
+int web_find_elements_from_shadow_root(web_context *ctx, web_element_location_strategy strategy, char *selector, char *shadow_root_id, char ***elements_id);
 
 void web_is_element_selected(void);
 

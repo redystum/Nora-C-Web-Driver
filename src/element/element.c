@@ -50,7 +50,7 @@ int web_get_element_shadow_root(web_context *ctx, char *element_id, char **shado
 
 // Common logic for finding elements
 int web_find_element_logic(web_context *ctx, web_element_location_strategy strategy, char *selector,
-                           char *element_id_src, char ***elements_id, int multiple) {
+                           char *element_id_src, char ***elements_id, int multiple, int shadow) {
 
     const char *using_str;
     switch (strategy) {
@@ -64,9 +64,25 @@ int web_find_element_logic(web_context *ctx, web_element_location_strategy strat
             using_str = "partial link text";
             break;
         case TAG_NAME:
-            using_str = "tag name";
+            // Shadow roots do not support getElementsByTagName, map to css selector
+            if (shadow) {
+                using_str = "css selector";
+            } else {
+                using_str = "tag name";
+            }
             break;
         case XPATH_SELECTOR:
+            // XPath selectors are not supported within a Shadow Root
+            if (shadow) {
+                DEBUG("XPath selector is not supported in shadow roots");
+                ctx->last_error = (web_error){
+                    .code = -1,
+                    .message = "XPath selector is not supported in shadow roots",
+                    .error = "invalid argument",
+                    .path = ""
+                };
+                return -1;
+            }
             using_str = "xpath";
             break;
         default:
@@ -86,7 +102,11 @@ int web_find_element_logic(web_context *ctx, web_element_location_strategy strat
     char endpoint[256];
     if (multiple) {
         if (element_id_src != NULL) {
-            snprintf(endpoint, sizeof(endpoint), "/element/%s/elements", element_id_src);
+            if (shadow) {
+                snprintf(endpoint, sizeof(endpoint), "/shadow/%s/elements", element_id_src);
+            } else {
+                snprintf(endpoint, sizeof(endpoint), "/element/%s/elements", element_id_src);
+            }
             resp = RCS(ctx, endpoint, request_str, &response_json, WEB_POST);
         } else {
             resp = RCS(ctx, "/elements", request_str, &response_json, WEB_POST);
@@ -112,7 +132,11 @@ int web_find_element_logic(web_context *ctx, web_element_location_strategy strat
         }
     } else {
         if (element_id_src != NULL) {
-            snprintf(endpoint, sizeof(endpoint), "/element/%s/element", element_id_src);
+            if (shadow) {
+                snprintf(endpoint, sizeof(endpoint), "/shadow/%s/element", element_id_src);
+            } else {
+                snprintf(endpoint, sizeof(endpoint), "/element/%s/element", element_id_src);
+            }
             resp = RCS(ctx, endpoint, request_str, &response_json, WEB_POST);
         } else {
             resp = RCS(ctx, "/element", request_str, &response_json, WEB_POST);
@@ -147,7 +171,7 @@ int web_find_element(web_context *ctx, web_element_location_strategy strategy, c
     }
 
     char **elements_id = NULL;
-    int resp = web_find_element_logic(ctx, strategy, selector, NULL, &elements_id, 0);
+    int resp = web_find_element_logic(ctx, strategy, selector, NULL, &elements_id, 0, 0);
     if (resp < 0) {
         if (element_id != NULL)
             *element_id = NULL;
@@ -166,7 +190,7 @@ int web_find_elements(web_context *ctx, web_element_location_strategy strategy, 
         return -1;
     }
 
-    int count = web_find_element_logic(ctx, strategy, selector, NULL, elements_id, 1);
+    int count = web_find_element_logic(ctx, strategy, selector, NULL, elements_id, 1, 0);
     if (count < 0) {
         if (elements_id != NULL)
             *elements_id = NULL;
@@ -176,20 +200,20 @@ int web_find_elements(web_context *ctx, web_element_location_strategy strategy, 
 }
 
 int web_find_element_from_element(web_context *ctx, web_element_location_strategy strategy, char *selector,
-                                  char *element_id_src, char **elements_id) {
+                                  char *element_id_src, char **element_id) {
     if (ctx == NULL || selector == NULL || element_id_src == NULL) {
         return -1;
     }
 
     char **found_elements = NULL;
-    int resp = web_find_element_logic(ctx, strategy, selector, element_id_src, &found_elements, 0);
+    int resp = web_find_element_logic(ctx, strategy, selector, element_id_src, &found_elements, 0, 0);
     if (resp < 0) {
-        if (elements_id != NULL)
-            *elements_id = NULL;
+        if (element_id != NULL)
+            *element_id = NULL;
         return resp;
     }
-    if (elements_id != NULL) {
-        *elements_id = found_elements[0];
+    if (element_id != NULL) {
+        *element_id = found_elements[0];
     }
     free(found_elements);
     return resp;
@@ -201,13 +225,44 @@ int web_find_elements_from_element(web_context *ctx, web_element_location_strate
         return -1;
     }
 
-    int count = web_find_element_logic(ctx, strategy, selector, element_id_src, elements_id, 1);
+    int count = web_find_element_logic(ctx, strategy, selector, element_id_src, elements_id, 1, 0);
     if (count < 0) {
         if (elements_id != NULL)
             *elements_id = NULL;
     }
     return count;
 }
+
+int web_find_element_from_shadow_root(web_context *ctx, web_element_location_strategy strategy, char *selector, char *shadow_root_id, char **element_id) {
+    if (ctx == NULL || selector == NULL || shadow_root_id == NULL) {
+        return -1;
+    }
+
+    char **found_elements = NULL;
+    int resp = web_find_element_logic(ctx, strategy, selector, shadow_root_id, &found_elements, 0, 1);
+    if (resp < 0) {
+        if (element_id != NULL)
+            *element_id = NULL;
+        return resp;
+    }
+    if (element_id != NULL) {
+        *element_id = found_elements[0];
+    }
+    free(found_elements);
+    return resp;}
+
+int web_find_elements_from_shadow_root(web_context *ctx, web_element_location_strategy strategy, char *selector, char *shadow_root_id, char ***elements_id) {
+    if (ctx == NULL || selector == NULL || shadow_root_id == NULL) {
+        return -1;
+    }
+
+    int count = web_find_element_logic(ctx, strategy, selector, shadow_root_id, elements_id, 1, 1);
+    if (count < 0) {
+        if (elements_id != NULL)
+            *elements_id = NULL;
+    }
+    return count;}
+
 
 
 int web_get_element_text(web_context *ctx, char *element_id, char **text) {

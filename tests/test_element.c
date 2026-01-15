@@ -17,26 +17,6 @@ void test_elements(web_context *ctx) {
 
     test_get_element(ctx);
 
-
-    web_navigate_to(ctx, "http://localhost/");
-    wait_to_page_load(ctx, 0);
-
-    r = web_find_element(ctx, CSS_SELECTOR, "#shadow-box", &active_element);
-    if (r < 0) {
-        print_error(ctx);
-        ERROR(1, "web_find_element failed with code %d", r);
-    }
-
-    char *shadow_root_id;
-    r = web_get_element_shadow_root(ctx, active_element, &shadow_root_id);
-    if (r < 0) {
-        print_error(ctx);
-        // ERROR(1, "web_get_element_shadow_root failed with code %d", r);
-        WARNING("web_get_element_shadow_root failed with code %d", r);
-    }
-    printf("Shadow Root ID: %s\n", shadow_root_id);
-    free(active_element);
-
 }
 
 void test_get_element(web_context *ctx) {
@@ -157,4 +137,32 @@ void test_get_element(web_context *ctx) {
         }
     }
     free(div);
+
+    web_navigate_to(ctx, "http://localhost/");
+    wait_to_page_load(ctx, 0);
+
+    r = web_find_element(ctx, CSS_SELECTOR, "#shadow-host", &active_element);
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_find_element failed with code %d", r);
+    }
+
+    char *shadow_root_id;
+    r = web_get_element_shadow_root(ctx, active_element, &shadow_root_id);
+    if (r < 0) {
+        print_error(ctx);
+        // ERROR(1, "web_get_element_shadow_root failed with code %d", r);
+        WARNING("web_get_element_shadow_root failed with code %d", r);
+    }
+    printf("Shadow Root ID: %s\n", shadow_root_id);
+    free(active_element);
+
+    r = web_find_element_from_shadow_root(ctx, XPATH_SELECTOR, "/div/p", shadow_root_id,
+                                          &active_element);
+    if (r < 0) {
+        print_error(ctx);
+        WARNING("web_find_element_from_shadow_root failed with code %d", r);
+    }
+    printf("Found Element from Shadow Root ID: %s\n", active_element);
+    free(active_element);
 }
