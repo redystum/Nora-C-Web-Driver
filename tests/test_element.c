@@ -157,7 +157,7 @@ void test_get_element(web_context *ctx) {
     printf("Shadow Root ID: %s\n", shadow_root_id);
     free(active_element);
 
-    r = web_find_element_from_shadow_root(ctx, XPATH_SELECTOR, "/div/p", shadow_root_id,
+    r = web_find_element_from_shadow_root(ctx, TAG_NAME, "p", shadow_root_id,
                                           &active_element);
     if (r < 0) {
         print_error(ctx);

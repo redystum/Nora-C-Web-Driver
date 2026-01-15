@@ -2,6 +2,7 @@
 #define UTILS_H
 
 #include <cjson/cJSON.h>
+#include "core/core.h"
 
 /**
  * \brief Prints an error message and aborts the program (PANIC)
@@ -52,6 +53,26 @@
 #endif
 
 /**
+ * \brief Checks if the context and parameter are NULL, sets error and returns -1 if so
+ * \param ctx   the web context
+ * \param param  the parameter to check
+ */
+#define CHECK_NULL(ctx, param)                       \
+    if (ctx == NULL) {                               \
+        return -1;                                   \
+    }                                                \
+    if ((param) == NULL) {                           \
+        web_error err = {                            \
+            .code = -1,                              \
+            .message = #param " is NULL",            \
+            .error = "invalid argument",             \
+            .path = ""                               \
+        };                                           \
+        web_set_last_error(ctx, err);                \
+        return -1;                                   \
+    }
+
+/**
  * \brief Initializes the log file
  * \param path  the path of the log file
  */
@@ -71,9 +92,13 @@ void ut_file_log_free(void);
 #define EOL '\n'
 
 void error(char *file, int line, int code, char *fmt, ...);
+
 void warning(char *format, ...);
+
 void info(char *format, ...);
+
 void debug(char *file, int line, const char *func, char *format, ...);
+
 void debug_json(cJSON *json, char *file, int line, const char *func);
 
 #endif				// UTILS_H

@@ -9,6 +9,8 @@ void web_reset_context(web_context *ctx) {
 }
 
 int web_init(web_context *ctx, char *geckodriverPath, char *firefoxPath, int port, int force_kill) {
+    CHECK_NULL(ctx, ctx);
+
     if (geckodriverPath != NULL) {
         ctx->geckodriverPath = geckodriverPath;
     } else {
@@ -49,6 +51,8 @@ int web_init(web_context *ctx, char *geckodriverPath, char *firefoxPath, int por
 }
 
 int web_close(web_context *ctx) {
+    CHECK_NULL(ctx, ctx);
+
     DEBUG("closing session '%s'", ctx->session.id);
 
     cJSON *response_json = NULL;
@@ -69,6 +73,9 @@ int web_usleep(int microseconds) {
 }
 
 int web_get_timeouts(web_context *ctx, web_timeouts *timeouts) {
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, timeouts);
+
     cJSON *response_json = NULL;
     int resp = RCS(ctx, "/timeouts", NULL, &response_json, WEB_GET);
     DEBUG_JSON(response_json);
@@ -95,6 +102,8 @@ int web_get_timeouts(web_context *ctx, web_timeouts *timeouts) {
 }
 
 int web_set_timeouts(web_context *ctx, web_timeouts timeouts) {
+    CHECK_NULL(ctx, ctx);
+
     cJSON *request_json = cJSON_CreateObject();
     cJSON_AddNumberToObject(request_json, "script", timeouts.script_ms);
     cJSON_AddNumberToObject(request_json, "pageLoad", timeouts.page_load_ms);
@@ -116,6 +125,8 @@ int web_set_timeouts(web_context *ctx, web_timeouts timeouts) {
 }
 
 int web_get_status(web_context *ctx, web_status *status) {
+    CHECK_NULL(ctx, ctx);
+
     cJSON *response_json = NULL;
     int resp = run_curl(ctx, "/status", "{}", &response_json, WEB_GET);
     DEBUG_JSON(response_json);
@@ -145,6 +156,8 @@ void free_status(web_status status) {
 }
 
 int web_create_session(web_context *ctx, web_session *session) {
+    CHECK_NULL(ctx, ctx);
+
     cJSON *response = NULL;
 
     int resp = run_curl(ctx, "/session",

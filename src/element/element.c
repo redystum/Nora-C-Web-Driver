@@ -4,7 +4,8 @@
 #include "communication_internal/communication.h"
 
 int web_element_active(web_context *ctx, char **element_id) {
-    if (element_id == NULL) return -1;
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
 
     cJSON *response_json = NULL;
     int resp = RCS(ctx, "/element/active", NULL, &response_json, WEB_GET);
@@ -25,9 +26,9 @@ int web_element_active(web_context *ctx, char **element_id) {
 }
 
 int web_get_element_shadow_root(web_context *ctx, char *element_id, char **shadow_root_id) {
-    if (element_id == NULL || shadow_root_id == NULL) {
-        return -1;
-    }
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
+    CHECK_NULL(ctx, shadow_root_id);
 
     char endpoint[256];
     snprintf(endpoint, sizeof(endpoint), "/element/%s/shadow", element_id);
@@ -51,7 +52,6 @@ int web_get_element_shadow_root(web_context *ctx, char *element_id, char **shado
 // Common logic for finding elements
 int web_find_element_logic(web_context *ctx, web_element_location_strategy strategy, char *selector,
                            char *element_id_src, char ***elements_id, int multiple, int shadow) {
-
     const char *using_str;
     switch (strategy) {
         case CSS_SELECTOR:
@@ -75,12 +75,13 @@ int web_find_element_logic(web_context *ctx, web_element_location_strategy strat
             // XPath selectors are not supported within a Shadow Root
             if (shadow) {
                 DEBUG("XPath selector is not supported in shadow roots");
-                ctx->last_error = (web_error){
+                web_error err = {
                     .code = -1,
                     .message = "XPath selector is not supported in shadow roots",
                     .error = "invalid argument",
                     .path = ""
                 };
+                web_set_last_error(ctx, err);
                 return -1;
             }
             using_str = "xpath";
@@ -166,9 +167,9 @@ int web_find_element_logic(web_context *ctx, web_element_location_strategy strat
 }
 
 int web_find_element(web_context *ctx, web_element_location_strategy strategy, char *selector, char **element_id) {
-    if (ctx == NULL || selector == NULL) {
-        return -1;
-    }
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, selector);
+    CHECK_NULL(ctx, element_id);
 
     char **elements_id = NULL;
     int resp = web_find_element_logic(ctx, strategy, selector, NULL, &elements_id, 0, 0);
@@ -186,9 +187,9 @@ int web_find_element(web_context *ctx, web_element_location_strategy strategy, c
 }
 
 int web_find_elements(web_context *ctx, web_element_location_strategy strategy, char *selector, char ***elements_id) {
-    if (ctx == NULL || selector == NULL) {
-        return -1;
-    }
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, selector);
+    CHECK_NULL(ctx, elements_id);
 
     int count = web_find_element_logic(ctx, strategy, selector, NULL, elements_id, 1, 0);
     if (count < 0) {
@@ -201,9 +202,10 @@ int web_find_elements(web_context *ctx, web_element_location_strategy strategy, 
 
 int web_find_element_from_element(web_context *ctx, web_element_location_strategy strategy, char *selector,
                                   char *element_id_src, char **element_id) {
-    if (ctx == NULL || selector == NULL || element_id_src == NULL) {
-        return -1;
-    }
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, selector);
+    CHECK_NULL(ctx, element_id_src);
+    CHECK_NULL(ctx, element_id);
 
     char **found_elements = NULL;
     int resp = web_find_element_logic(ctx, strategy, selector, element_id_src, &found_elements, 0, 0);
@@ -221,9 +223,10 @@ int web_find_element_from_element(web_context *ctx, web_element_location_strateg
 
 int web_find_elements_from_element(web_context *ctx, web_element_location_strategy strategy, char *selector,
                                    char *element_id_src, char ***elements_id) {
-    if (ctx == NULL || selector == NULL || element_id_src == NULL) {
-        return -1;
-    }
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, selector);
+    CHECK_NULL(ctx, element_id_src);
+    CHECK_NULL(ctx, elements_id);
 
     int count = web_find_element_logic(ctx, strategy, selector, element_id_src, elements_id, 1, 0);
     if (count < 0) {
@@ -233,10 +236,12 @@ int web_find_elements_from_element(web_context *ctx, web_element_location_strate
     return count;
 }
 
-int web_find_element_from_shadow_root(web_context *ctx, web_element_location_strategy strategy, char *selector, char *shadow_root_id, char **element_id) {
-    if (ctx == NULL || selector == NULL || shadow_root_id == NULL) {
-        return -1;
-    }
+int web_find_element_from_shadow_root(web_context *ctx, web_element_location_strategy strategy, char *selector,
+                                      char *shadow_root_id, char **element_id) {
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, selector);
+    CHECK_NULL(ctx, shadow_root_id);
+    CHECK_NULL(ctx, element_id);
 
     char **found_elements = NULL;
     int resp = web_find_element_logic(ctx, strategy, selector, shadow_root_id, &found_elements, 0, 1);
@@ -249,26 +254,29 @@ int web_find_element_from_shadow_root(web_context *ctx, web_element_location_str
         *element_id = found_elements[0];
     }
     free(found_elements);
-    return resp;}
+    return resp;
+}
 
-int web_find_elements_from_shadow_root(web_context *ctx, web_element_location_strategy strategy, char *selector, char *shadow_root_id, char ***elements_id) {
-    if (ctx == NULL || selector == NULL || shadow_root_id == NULL) {
-        return -1;
-    }
+int web_find_elements_from_shadow_root(web_context *ctx, web_element_location_strategy strategy, char *selector,
+                                       char *shadow_root_id, char ***elements_id) {
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, selector);
+    CHECK_NULL(ctx, shadow_root_id);
+    CHECK_NULL(ctx, elements_id);
 
     int count = web_find_element_logic(ctx, strategy, selector, shadow_root_id, elements_id, 1, 1);
     if (count < 0) {
         if (elements_id != NULL)
             *elements_id = NULL;
     }
-    return count;}
-
+    return count;
+}
 
 
 int web_get_element_text(web_context *ctx, char *element_id, char **text) {
-    if (ctx == NULL || element_id == NULL || text == NULL) {
-        return -1;
-    }
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
+    CHECK_NULL(ctx, text);
 
     char endpoint[256];
     snprintf(endpoint, sizeof(endpoint), "/element/%s/text", element_id);

@@ -3,6 +3,8 @@
 #include "../communication_internal/communication.h"
 
 int web_navigate_to(web_context *ctx, char *url) {
+    CHECK_NULL(ctx, ctx);
+
     if (url == NULL) {
         url = "about:blank";
     }
@@ -17,6 +19,8 @@ int web_navigate_to(web_context *ctx, char *url) {
 }
 
 int wait_to_page_load(web_context *ctx, int max_wait_seconds) {
+    CHECK_NULL(ctx, ctx);
+
     int waited = 0;
     max_wait_seconds = max_wait_seconds * 10; // convert to 0.1 second units
     if (max_wait_seconds == 0) max_wait_seconds = INT_MAX;
@@ -40,6 +44,8 @@ int wait_to_page_load(web_context *ctx, int max_wait_seconds) {
 }
 
 int web_get_url(web_context *ctx, char **url) {
+    CHECK_NULL(ctx, ctx);
+
     cJSON *response_json = NULL;
     int resp = RCS(ctx, "/url", NULL, &response_json, WEB_GET);
     DEBUG_JSON(response_json);
@@ -72,6 +78,8 @@ int web_get_url(web_context *ctx, char **url) {
 }
 
 int web_back(web_context *ctx) {
+    CHECK_NULL(ctx, ctx);
+
     cJSON *response_json = NULL;
     int resp = RCS(ctx, "/back", NULL, &response_json, WEB_POST);
     DEBUG_JSON(response_json);
@@ -79,6 +87,8 @@ int web_back(web_context *ctx) {
 }
 
 int web_forward(web_context *ctx) {
+    CHECK_NULL(ctx, ctx);
+
     cJSON *response_json = NULL;
     int resp = RCS(ctx, "/forward", NULL, &response_json, WEB_POST);
     DEBUG_JSON(response_json);
@@ -86,6 +96,8 @@ int web_forward(web_context *ctx) {
 }
 
 int web_refresh(web_context *ctx) {
+    CHECK_NULL(ctx, ctx);
+
     cJSON *response_json = NULL;
     int resp = RCS(ctx, "/refresh", NULL, &response_json, WEB_POST);
     DEBUG_JSON(response_json);
@@ -93,6 +105,8 @@ int web_refresh(web_context *ctx) {
 }
 
 int web_get_title(web_context *ctx, char **title) {
+    CHECK_NULL(ctx, ctx);
+
     cJSON *response_json = NULL;
     int resp = RCS(ctx, "/title", NULL, &response_json, WEB_GET);
     DEBUG_JSON(response_json);
