@@ -295,3 +295,58 @@ int web_get_element_text(web_context *ctx, char *element_id, char **text) {
     cJSON_Delete(response_json);
     return resp;
 }
+
+int web_get_prop_attr_css_logic(web_context *ctx, char *url, char **value) {
+    cJSON *response_json = NULL;
+    int resp = RCS(ctx, url, NULL, &response_json, WEB_GET);
+    DEBUG_JSON(response_json);
+    if (resp < 0) {
+        return resp;
+    }
+
+    cJSON *val = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+    if (cJSON_IsNull(val)) {
+        *value = NULL;
+        DEBUG("Value is null");
+    } else {
+        *value = strdup(val->valuestring);
+        DEBUG("Value: %s", *value);
+    }
+
+    cJSON_Delete(response_json);
+    return resp;
+
+}
+
+int web_get_element_attribute(web_context *ctx, char *element_id, char *attribute_name, char **attribute_value){
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
+    CHECK_NULL(ctx, attribute_name);
+    CHECK_NULL(ctx, attribute_value);
+
+    char endpoint[256];
+    snprintf(endpoint, sizeof(endpoint), "/element/%s/attribute/%s", element_id, attribute_name);
+    return web_get_prop_attr_css_logic(ctx, endpoint, attribute_value);
+}
+
+int web_get_element_property(web_context *ctx, char *element_id, char *property_name, char **property_value){
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
+    CHECK_NULL(ctx, property_name);
+    CHECK_NULL(ctx, property_value);
+
+    char endpoint[256];
+    snprintf(endpoint, sizeof(endpoint), "/element/%s/property/%s", element_id, property_name);
+    return web_get_prop_attr_css_logic(ctx, endpoint, property_value);
+}
+
+int web_get_element_css_value(web_context *ctx, char *element_id, char *css_property_name, char **css_property_value){
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
+    CHECK_NULL(ctx, css_property_name);
+    CHECK_NULL(ctx, css_property_value);
+
+    char endpoint[256];
+    snprintf(endpoint, sizeof(endpoint), "/element/%s/css/%s", element_id, css_property_name);
+    return web_get_prop_attr_css_logic(ctx, endpoint, css_property_value);
+}

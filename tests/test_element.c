@@ -17,6 +17,37 @@ void test_elements(web_context *ctx) {
 
     test_get_element(ctx);
 
+    free(active_element);
+    r = web_find_element(ctx, CSS_SELECTOR, "#attr-test", &active_element);
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_find_element failed with code %d", r);
+    }
+    char *props;
+    r = web_get_element_property(ctx, active_element, "value", &props);
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_get_element_property failed with code %d", r);
+    }
+    printf("Element Property 'value': %s\n", props);
+
+    r = web_get_element_attribute(ctx, active_element, "data-test-id", &props);
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_get_element_attribute failed with code %d", r);
+    }
+    printf("Element Attribute 'data-test-id': %s\n", props);
+
+    free(active_element);
+    r = web_find_element(ctx, CSS_SELECTOR, "#style-target", &active_element);
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_find_element failed with code %d", r);
+    }
+    web_get_element_css_value(ctx, active_element, "background-color", &props);
+    printf("Element CSS 'background-color': %s\n", props);
+    free(active_element);
+
 }
 
 void test_get_element(web_context *ctx) {

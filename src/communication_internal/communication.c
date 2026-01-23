@@ -82,6 +82,13 @@ int run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, we
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
     if (res != CURLE_OK) {
         DEBUG("curl_easy_perform failed: %s", curl_easy_strerror(res));
+        web_error err = {0};
+        err.code = -1;
+        err.path = strdup(url);
+        err.error = strdup("CURL request failed");
+        err.message = strdup(curl_easy_strerror(res));
+        web_set_last_error(ctx, err);
+        curl_easy_cleanup(curl);
         return -1;
     } else {
         DEBUG("request OK, HTTP response code: %ld", http_code);

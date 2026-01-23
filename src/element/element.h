@@ -85,13 +85,11 @@ int web_find_element_from_shadow_root(web_context *ctx, web_element_location_str
  */
 int web_find_elements_from_shadow_root(web_context *ctx, web_element_location_strategy strategy, char *selector, char *shadow_root_id, char ***elements_id);
 
-void web_is_element_selected(void);
+int web_get_element_attribute(web_context *ctx, char *element_id, char *attribute_name, char **attribute_value);
 
-void web_get_element_attribute(void);
+int web_get_element_property(web_context *ctx, char *element_id, char *property_name, char **property_value);
 
-void web_get_element_property(void);
-
-void web_get_element_css_value(void);
+int web_get_element_css_value(web_context *ctx, char *element_id, char *css_property_name, char **css_property_value);
 
 int web_get_element_text(web_context *ctx, char *element_id, char **text);
 
@@ -100,6 +98,9 @@ void web_get_element_tag_name(void);
 void web_get_element_rect(void);
 
 void web_is_element_enabled(void);
+
+void web_is_element_selected(void);
+
 
 void web_get_computed_role(void);
 
