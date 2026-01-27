@@ -83,7 +83,7 @@ typedef struct {
     int y;
     int width;
     int height;
-} web_window_rect;
+} web_rect;
 
 /**
  * \brief Get current window rectangle
@@ -91,34 +91,34 @@ typedef struct {
  * \param rect output window rectangle
  * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
  */
-int web_get_window_rect(web_context *ctx, web_window_rect *rect);
+int web_get_window_rect(web_context *ctx, web_rect *rect);
 /**
  * \brief Set current window rectangle
  * \param ctx web context
  * \param rect input window rectangle
  * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
  */
-int web_set_window_rect(web_context *ctx, web_window_rect rect);
+int web_set_window_rect(web_context *ctx, web_rect rect);
 /**
  * \brief Maximize current window
  * \param ctx web context
  * \param rect output window rectangle after maximizing
  * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
  */
-int web_maximize_window(web_context *ctx, web_window_rect *rect);
+int web_maximize_window(web_context *ctx, web_rect *rect);
 /**
  * \brief Minimize current window
  * \param ctx web context
  * \param rect output window rectangle after minimizing
  * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
  */
-int web_minimize_window(web_context *ctx, web_window_rect *rect);
+int web_minimize_window(web_context *ctx, web_rect *rect);
 /**
  * \brief Set current window to fullscreen
  * \param ctx web context
  * \param rect output window rectangle after fullscreen
  * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
  */
-int web_fullscreen_window(web_context *ctx, web_window_rect *rect);
+int web_fullscreen_window(web_context *ctx, web_rect *rect);
 
 #endif				// WINDOW_H

@@ -350,3 +350,99 @@ int web_get_element_css_value(web_context *ctx, char *element_id, char *css_prop
     snprintf(endpoint, sizeof(endpoint), "/element/%s/css/%s", element_id, css_property_name);
     return web_get_prop_attr_css_logic(ctx, endpoint, css_property_value);
 }
+
+int web_get_element_tag_name(web_context *ctx, char *element_id, char **tag) {
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
+    CHECK_NULL(ctx, tag);
+
+    char endpoint[256];
+    snprintf(endpoint, sizeof(endpoint), "/element/%s/name", element_id);
+
+    cJSON *response_json = NULL;
+    int resp = RCS(ctx, endpoint, NULL, &response_json, WEB_GET);
+    DEBUG_JSON(response_json);
+    if (resp < 0) {
+        return resp;
+    }
+
+    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+    *tag = strdup(value->valuestring);
+    DEBUG("Element tag name: %s", *tag);
+
+    cJSON_Delete(response_json);
+    return resp;
+}
+
+int web_get_element_rect(web_context *ctx, char *element_id, web_rect *rect) {
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
+    CHECK_NULL(ctx, rect);
+
+    char endpoint[256];
+    snprintf(endpoint, sizeof(endpoint), "/element/%s/rect", element_id);
+
+    cJSON *response_json = NULL;
+    int resp = RCS(ctx, endpoint, NULL, &response_json, WEB_GET);
+    DEBUG_JSON(response_json);
+    if (resp < 0) {
+        return resp;
+    }
+
+    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+    rect->x = cJSON_GetObjectItemCaseSensitive(value, "x")->valuedouble;
+    rect->y = cJSON_GetObjectItemCaseSensitive(value, "y")->valuedouble;
+    rect->width = cJSON_GetObjectItemCaseSensitive(value, "width")->valuedouble;
+    rect->height = cJSON_GetObjectItemCaseSensitive(value, "height")->valuedouble;
+
+    DEBUG("Element rect: x=%d, y=%d, width=%d, height=%d", rect->x, rect->y, rect->width, rect->height);
+
+    cJSON_Delete(response_json);
+    return resp;
+}
+
+int web_is_element_enabled(web_context *ctx, char *element_id, int *enabled) {
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
+    CHECK_NULL(ctx, enabled);
+
+    char endpoint[256];
+    snprintf(endpoint, sizeof(endpoint), "/element/%s/enabled", element_id);
+
+    cJSON *response_json = NULL;
+    int resp = RCS(ctx, endpoint, NULL, &response_json, WEB_GET);
+    DEBUG_JSON(response_json);
+    if (resp < 0) {
+        return resp;
+    }
+
+    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+    *enabled = cJSON_IsTrue(value) ? 1 : 0;
+    DEBUG("Element enabled: %d", *enabled);
+
+    cJSON_Delete(response_json);
+    return resp;
+}
+
+int web_is_element_selected(web_context *ctx, char *element_id, int *enabled) {
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
+    CHECK_NULL(ctx, enabled);
+
+    char endpoint[256];
+    snprintf(endpoint, sizeof(endpoint), "/element/%s/selected", element_id);
+
+    cJSON *response_json = NULL;
+    int resp = RCS(ctx, endpoint, NULL, &response_json, WEB_GET);
+    DEBUG_JSON(response_json);
+    if (resp < 0) {
+        return resp;
+    }
+
+    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+    *enabled = cJSON_IsTrue(value) ? 1 : 0;
+    DEBUG("Element selected: %d", *enabled);
+
+    cJSON_Delete(response_json);
+    return resp;
+}

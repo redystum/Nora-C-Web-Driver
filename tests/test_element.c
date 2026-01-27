@@ -46,8 +46,40 @@ void test_elements(web_context *ctx) {
     }
     web_get_element_css_value(ctx, active_element, "background-color", &props);
     printf("Element CSS 'background-color': %s\n", props);
-    free(active_element);
+    free(props);
 
+    r = web_get_element_tag_name(ctx, active_element, &props);
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_get_element_tag_name failed with code %d", r);
+    }
+    printf("Element Tag Name: %s\n", props);
+    free(props);
+
+    web_rect rect;
+    r = web_get_element_rect(ctx, active_element, &rect);
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_get_element_rect failed with code %d", r);
+    } else {
+        printf("Element Rect: x=%d y=%d width=%d height=%d\n",
+               rect.x, rect.y, rect.width, rect.height);
+    }
+
+    r = web_is_element_enabled(ctx, active_element, &r);
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_is_element_enabled failed with code %d", r);
+    }
+    printf("Element is %s\n", r == 1  ? "enabled" : "disabled");
+
+    r = web_is_element_selected(ctx, active_element, &r);
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_is_element_selected failed with code %d", r);
+    }
+    printf("Element is %s\n", r == 1 ? "selected" : "not selected");
+    free(active_element);
 }
 
 void test_get_element(web_context *ctx) {

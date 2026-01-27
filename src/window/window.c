@@ -3,7 +3,7 @@
 
 #include "communication_internal/communication.h"
 
-int web_get_window_rect(web_context *ctx, web_window_rect *rect) {
+int web_get_window_rect(web_context *ctx, web_rect *rect) {
     CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, rect);
 
@@ -28,7 +28,7 @@ int web_get_window_rect(web_context *ctx, web_window_rect *rect) {
     return resp;
 }
 
-int web_set_window_rect(web_context *ctx, web_window_rect rect) {
+int web_set_window_rect(web_context *ctx, web_rect rect) {
     CHECK_NULL(ctx, ctx);
 
     cJSON *request_json = cJSON_CreateObject();
@@ -52,7 +52,7 @@ int web_set_window_rect(web_context *ctx, web_window_rect rect) {
     return resp;
 }
 
-int web_maximize_window(web_context *ctx, web_window_rect *rect) {
+int web_maximize_window(web_context *ctx, web_rect *rect) {
     CHECK_NULL(ctx, ctx);
 
     cJSON *response_json = NULL;
@@ -75,7 +75,7 @@ int web_maximize_window(web_context *ctx, web_window_rect *rect) {
     return resp;
 }
 
-int web_minimize_window(web_context *ctx, web_window_rect *rect) {
+int web_minimize_window(web_context *ctx, web_rect *rect) {
     CHECK_NULL(ctx, ctx);
 
     cJSON *response_json = NULL;
@@ -98,7 +98,7 @@ int web_minimize_window(web_context *ctx, web_window_rect *rect) {
     return resp;
 }
 
-int web_fullscreen_window(web_context *ctx, web_window_rect *rect) {
+int web_fullscreen_window(web_context *ctx, web_rect *rect) {
     CHECK_NULL(ctx, ctx);
 
     cJSON *response_json = NULL;
