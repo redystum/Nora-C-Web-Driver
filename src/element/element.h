@@ -152,15 +152,51 @@ int web_is_element_enabled(web_context *ctx, char *element_id, int *enabled);
  * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
  */
 int web_is_element_selected(web_context *ctx, char *element_id, int *enabled);
-
-void web_get_computed_role(void);
-
-void web_get_computed_label(void);
-
-void web_click_element(void);
-
-void web_clear_element(void);
-
-void web_send_keys_to_element(void);
+/**
+ * \brief Get an element's computed ARIA role
+ * \param ctx web context
+ * \param element_id element ID
+ * \param role output computed role
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
+int web_get_computed_role(web_context *ctx, char *element_id, int *role);
+/**
+ * \brief Get an element's computed ARIA label
+ * \param ctx web context
+ * \param element_id element ID
+ * \param label output computed label
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
+int web_get_computed_label(web_context *ctx, char *element_id, int *label);
+/**
+ * \brief Click on an element
+ * \param ctx web context
+ * \param element_id element ID
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
+int web_click_element(web_context *ctx,  char *element_id);
+/**
+ * \brief Clear the content of an element
+ * \param ctx web context
+ * \param element_id element ID
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
+int web_clear_element(web_context *ctx, char *element_id);
+/**
+ * \brief Send keys to an element
+ * \param ctx web context
+ * \param element_id element ID
+ * \param keys string of keys to send
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
+int web_send_keys_to_element(web_context *ctx, char *element_id, char *keys);
+/**
+ * \brief Get the value of an input element
+ * \param ctx web context
+ * \param element_id element ID
+ * \param value output input value
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
+int web_get_input_value(web_context *ctx, char *element_id, char **value);
 
 #endif				// ELEMENT_H

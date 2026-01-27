@@ -446,3 +446,113 @@ int web_is_element_selected(web_context *ctx, char *element_id, int *enabled) {
     cJSON_Delete(response_json);
     return resp;
 }
+
+int web_get_computed_role(web_context *ctx, char *element_id, int *role) {
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
+    CHECK_NULL(ctx, role);
+
+    char endpoint[256];
+    snprintf(endpoint, sizeof(endpoint), "/element/%s/computedrole", element_id);
+
+    cJSON *response_json = NULL;
+    int resp = RCS(ctx, endpoint, NULL, &response_json, WEB_GET);
+    DEBUG_JSON(response_json);
+    if (resp < 0) {
+        return resp;
+    }
+
+    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+    *role = value->valueint;
+    DEBUG("Element computed ARIA role: %d", *role);
+
+    cJSON_Delete(response_json);
+    return resp;
+}
+
+int web_get_computed_label(web_context *ctx, char *element_id, int *label) {
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
+    CHECK_NULL(ctx, label);
+
+    char endpoint[256];
+    snprintf(endpoint, sizeof(endpoint), "/element/%s/computedlabel", element_id);
+
+    cJSON *response_json = NULL;
+    int resp = RCS(ctx, endpoint, NULL, &response_json, WEB_GET);
+    DEBUG_JSON(response_json);
+    if (resp < 0) {
+        return resp;
+    }
+
+    cJSON *value = cJSON_GetObjectItemCaseSensitive(response_json, "value");
+    *label = value->valueint;
+    DEBUG("Element computed ARIA label: %d", *label);
+
+    cJSON_Delete(response_json);
+    return resp;
+}
+
+int web_click_element(web_context *ctx,  char *element_id) {
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
+
+    char endpoint[256];
+    snprintf(endpoint, sizeof(endpoint), "/element/%s/click", element_id);
+
+    cJSON *response_json = NULL;
+    int resp = RCS(ctx, endpoint, NULL, &response_json, WEB_POST);
+    DEBUG_JSON(response_json);
+    if (resp < 0) {
+        return resp;
+    }
+
+    cJSON_Delete(response_json);
+    return resp;
+}
+int web_clear_element(web_context *ctx, char *element_id) {
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
+
+    char endpoint[256];
+    snprintf(endpoint, sizeof(endpoint), "/element/%s/clear", element_id);
+
+    cJSON *response_json = NULL;
+    int resp = RCS(ctx, endpoint, NULL, &response_json, WEB_POST);
+    DEBUG_JSON(response_json);
+    if (resp < 0) {
+        return resp;
+    }
+
+    cJSON_Delete(response_json);
+    return resp;
+}
+int web_send_keys_to_element(web_context *ctx, char *element_id, char *keys) {
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
+    CHECK_NULL(ctx, keys);
+
+    char endpoint[256];
+    snprintf(endpoint, sizeof(endpoint), "/element/%s/value", element_id);
+
+    char data[2048];
+    snprintf(data, sizeof(data), "{\"text\": \"%s\"}", keys);
+
+    cJSON *response_json = NULL;
+    int resp = RCS(ctx, endpoint, data, &response_json, WEB_POST);
+    DEBUG_JSON(response_json);
+    if (resp < 0) {
+        return resp;
+    }
+
+    cJSON_Delete(response_json);
+    return resp;
+}
+
+int web_get_input_value(web_context *ctx, char *element_id, char **value) {
+    CHECK_NULL(ctx, ctx);
+    CHECK_NULL(ctx, element_id);
+    CHECK_NULL(ctx, value);
+
+    return web_get_element_property(ctx, element_id, "value", value);
+}

@@ -72,6 +72,10 @@ int web_usleep(int microseconds) {
     return nanosleep(&ts, NULL);
 }
 
+int web_sleep(int seconds) {
+    return web_usleep(seconds * 1000000);
+}
+
 int web_get_timeouts(web_context *ctx, web_timeouts *timeouts) {
     CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, timeouts);

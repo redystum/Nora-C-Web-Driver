@@ -68,6 +68,12 @@ int web_close(web_context *ctx);
  */
 int web_usleep(int microseconds);
 /**
+ * \brief Sleep for a given number of seconds
+ * \param seconds number of seconds to sleep
+ * \return 0 on success, -1 on failure
+ */
+int web_sleep(int seconds);
+/**
  * \brief Reset web context
  * \param ctx web context to reset
  */

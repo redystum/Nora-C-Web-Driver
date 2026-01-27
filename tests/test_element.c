@@ -80,6 +80,42 @@ void test_elements(web_context *ctx) {
     }
     printf("Element is %s\n", r == 1 ? "selected" : "not selected");
     free(active_element);
+
+    r = web_find_element(ctx, CSS_SELECTOR, "#fname", &active_element);
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_find_element failed with code %d", r);
+    }
+
+    web_get_computed_label(ctx, active_element, &r);
+    printf("Element Computed ARIA Label: %d\n", r);
+    web_get_computed_role(ctx, active_element, &r);
+    printf("Element Computed ARIA Role: %d\n", r);
+
+    r = web_send_keys_to_element(ctx, active_element, "John Doe");
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_send_keys_to_element failed with code %d", r);
+    }
+    r = web_get_input_value(ctx, active_element, &props);
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_get_input_value failed with code %d", r);
+    }
+    printf("Input Value: %s\n", props);
+    if (props == NULL || strcmp(props, "John Doe") != 0) {
+        WARNING("Input value does not match expected value");
+    } else {
+        INFO("Input value matches expected value");
+    }
+    r = web_clear_element(ctx, active_element);
+    if (r < 0) {
+        print_error(ctx);
+        ERROR(1, "web_clear_element failed with code %d", r);
+    }
+    free(props);
+    free(active_element);
+
 }
 
 void test_get_element(web_context *ctx) {
