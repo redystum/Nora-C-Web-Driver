@@ -51,13 +51,14 @@ int run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, we
  */
 int run_curl_session(web_context *ctx, char *path, char *data, cJSON **response, web_request_method method);
 /**
- * \brief Validate if executable exists and is executable
- * \param path path to executable
- * \param error_msg output error message buffer
- * \param error_len size of error message buffer
- * \return \b 0 = success \n\b -1 = empty path \n\b -2 = file not found \n\b -3 = not executable \n\b -4 = command failed \n\b -5 = startup error \n\b -6 = log file read error
+ * \brief run geckodriver
+ * \param ctx web context
+ * \param force_kill force kill existing geckodriver instances
+ * \param ignore_gecko_checks ignore geckodriver executable checks
+ * \param ignore_firefox_checks ignore firefox executable checks
+ * \return \b 0 = success \n\b -5 = geckodriver startup error \n\b -6 = could not read geckodriver log
  */
-int gecko_run(web_context *ctx, int force_kill);
+int gecko_run(web_context *ctx, int force_kill, int ignore_gecko_checks, int ignore_firefox_checks);
 /**
  * \brief Wait until geckodriver is ready
  * \param ctx web context

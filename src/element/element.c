@@ -4,7 +4,6 @@
 #include "communication_internal/communication.h"
 
 int web_element_active(web_context *ctx, char **element_id) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
 
     cJSON *response_json = NULL;
@@ -26,7 +25,6 @@ int web_element_active(web_context *ctx, char **element_id) {
 }
 
 int web_get_element_shadow_root(web_context *ctx, char *element_id, char **shadow_root_id) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
     CHECK_NULL(ctx, shadow_root_id);
 
@@ -167,7 +165,6 @@ int web_find_element_logic(web_context *ctx, web_element_location_strategy strat
 }
 
 int web_find_element(web_context *ctx, web_element_location_strategy strategy, char *selector, char **element_id) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, selector);
     CHECK_NULL(ctx, element_id);
 
@@ -187,7 +184,6 @@ int web_find_element(web_context *ctx, web_element_location_strategy strategy, c
 }
 
 int web_find_elements(web_context *ctx, web_element_location_strategy strategy, char *selector, char ***elements_id) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, selector);
     CHECK_NULL(ctx, elements_id);
 
@@ -202,7 +198,6 @@ int web_find_elements(web_context *ctx, web_element_location_strategy strategy, 
 
 int web_find_element_from_element(web_context *ctx, web_element_location_strategy strategy, char *selector,
                                   char *element_id_src, char **element_id) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, selector);
     CHECK_NULL(ctx, element_id_src);
     CHECK_NULL(ctx, element_id);
@@ -223,7 +218,6 @@ int web_find_element_from_element(web_context *ctx, web_element_location_strateg
 
 int web_find_elements_from_element(web_context *ctx, web_element_location_strategy strategy, char *selector,
                                    char *element_id_src, char ***elements_id) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, selector);
     CHECK_NULL(ctx, element_id_src);
     CHECK_NULL(ctx, elements_id);
@@ -238,7 +232,6 @@ int web_find_elements_from_element(web_context *ctx, web_element_location_strate
 
 int web_find_element_from_shadow_root(web_context *ctx, web_element_location_strategy strategy, char *selector,
                                       char *shadow_root_id, char **element_id) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, selector);
     CHECK_NULL(ctx, shadow_root_id);
     CHECK_NULL(ctx, element_id);
@@ -259,7 +252,6 @@ int web_find_element_from_shadow_root(web_context *ctx, web_element_location_str
 
 int web_find_elements_from_shadow_root(web_context *ctx, web_element_location_strategy strategy, char *selector,
                                        char *shadow_root_id, char ***elements_id) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, selector);
     CHECK_NULL(ctx, shadow_root_id);
     CHECK_NULL(ctx, elements_id);
@@ -274,7 +266,6 @@ int web_find_elements_from_shadow_root(web_context *ctx, web_element_location_st
 
 
 int web_get_element_text(web_context *ctx, char *element_id, char **text) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
     CHECK_NULL(ctx, text);
 
@@ -319,7 +310,6 @@ int web_get_prop_attr_css_logic(web_context *ctx, char *url, char **value) {
 }
 
 int web_get_element_attribute(web_context *ctx, char *element_id, char *attribute_name, char **attribute_value){
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
     CHECK_NULL(ctx, attribute_name);
     CHECK_NULL(ctx, attribute_value);
@@ -330,7 +320,6 @@ int web_get_element_attribute(web_context *ctx, char *element_id, char *attribut
 }
 
 int web_get_element_property(web_context *ctx, char *element_id, char *property_name, char **property_value){
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
     CHECK_NULL(ctx, property_name);
     CHECK_NULL(ctx, property_value);
@@ -341,7 +330,6 @@ int web_get_element_property(web_context *ctx, char *element_id, char *property_
 }
 
 int web_get_element_css_value(web_context *ctx, char *element_id, char *css_property_name, char **css_property_value){
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
     CHECK_NULL(ctx, css_property_name);
     CHECK_NULL(ctx, css_property_value);
@@ -352,7 +340,6 @@ int web_get_element_css_value(web_context *ctx, char *element_id, char *css_prop
 }
 
 int web_get_element_tag_name(web_context *ctx, char *element_id, char **tag) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
     CHECK_NULL(ctx, tag);
 
@@ -375,7 +362,6 @@ int web_get_element_tag_name(web_context *ctx, char *element_id, char **tag) {
 }
 
 int web_get_element_rect(web_context *ctx, char *element_id, web_rect *rect) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
     CHECK_NULL(ctx, rect);
 
@@ -402,7 +388,6 @@ int web_get_element_rect(web_context *ctx, char *element_id, web_rect *rect) {
 }
 
 int web_is_element_enabled(web_context *ctx, char *element_id, int *enabled) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
     CHECK_NULL(ctx, enabled);
 
@@ -425,7 +410,6 @@ int web_is_element_enabled(web_context *ctx, char *element_id, int *enabled) {
 }
 
 int web_is_element_selected(web_context *ctx, char *element_id, int *enabled) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
     CHECK_NULL(ctx, enabled);
 
@@ -448,7 +432,6 @@ int web_is_element_selected(web_context *ctx, char *element_id, int *enabled) {
 }
 
 int web_get_computed_role(web_context *ctx, char *element_id, int *role) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
     CHECK_NULL(ctx, role);
 
@@ -471,7 +454,6 @@ int web_get_computed_role(web_context *ctx, char *element_id, int *role) {
 }
 
 int web_get_computed_label(web_context *ctx, char *element_id, int *label) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
     CHECK_NULL(ctx, label);
 
@@ -494,7 +476,6 @@ int web_get_computed_label(web_context *ctx, char *element_id, int *label) {
 }
 
 int web_click_element(web_context *ctx,  char *element_id) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
 
     char endpoint[256];
@@ -511,7 +492,6 @@ int web_click_element(web_context *ctx,  char *element_id) {
     return resp;
 }
 int web_clear_element(web_context *ctx, char *element_id) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
 
     char endpoint[256];
@@ -528,7 +508,6 @@ int web_clear_element(web_context *ctx, char *element_id) {
     return resp;
 }
 int web_send_keys_to_element(web_context *ctx, char *element_id, char *keys) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
     CHECK_NULL(ctx, keys);
 
@@ -550,7 +529,6 @@ int web_send_keys_to_element(web_context *ctx, char *element_id, char *keys) {
 }
 
 int web_get_input_value(web_context *ctx, char *element_id, char **value) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, element_id);
     CHECK_NULL(ctx, value);
 

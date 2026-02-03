@@ -94,7 +94,7 @@ void test_window_geometry(web_context *ctx) {
     int r;
     // Geometry tests
     INFO("------ Window Geometry Tests -----");
-    web_window_rect current_rect;
+    web_rect current_rect;
     r = web_get_window_rect(ctx, &current_rect);
     if (r < 0) {
         ERROR(1, "web_get_window_rect failed with code %d", r);
@@ -102,7 +102,7 @@ void test_window_geometry(web_context *ctx) {
     INFO("Current rect: x=%d, y=%d, width=%d, height=%d", current_rect.x, current_rect.y, current_rect.width,
          current_rect.height);
     sleep(4);
-    web_window_rect rect;
+    web_rect rect;
     r = web_fullscreen_window(ctx, &rect);
     if (r < 0) {
         ERROR(1, "web_fullscreen_window failed with code %d", r);

@@ -92,7 +92,7 @@ int run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, we
         return -1;
     } else {
         DEBUG("request OK, HTTP response code: %ld", http_code);
-        DEBUG("response (truncated): %.200s", raw_buf);
+        DEBUG("response (truncated): %s", raw_buf);
 
         if (http_code < 200 || http_code >= 300) {
             DEBUG("HTTP error code %ld received", http_code);
@@ -170,7 +170,7 @@ int validate_executable(const char *path, char *error_msg, size_t error_len) {
     return 0;
 }
 
-int gecko_run(web_context *ctx, int force_kill) {
+int gecko_run(web_context *ctx, int force_kill, int ignore_gecko_checks, int ignore_firefox_checks) {
     char out_error[1024] = {0};
     size_t error_size = sizeof(out_error);
 
@@ -184,7 +184,7 @@ int gecko_run(web_context *ctx, int force_kill) {
 
     // pre-checks
     int validate = 0;
-    if ((validate = validate_executable(ctx->geckodriverPath, out_error, error_size)) < 0) {
+    if (ignore_gecko_checks == 0 && (validate = validate_executable(ctx->geckodriverPath, out_error, error_size)) < 0) {
         DEBUG("Geckodriver validation failed: %s", out_error);
         web_error err = {
             .code = validate,
@@ -196,7 +196,7 @@ int gecko_run(web_context *ctx, int force_kill) {
         return validate;
     }
     DEBUG("Geckodriver binary found: %s", ctx->geckodriverPath);
-    if (access(ctx->firefoxPath, F_OK | R_OK) != 0) {
+    if (ignore_firefox_checks == 0 && access(ctx->firefoxPath, F_OK | R_OK) != 0) {
         DEBUG("Firefox binary validation failed");
         snprintf(out_error, error_size, "Firefox binary not found or not readable");
         web_error err = {

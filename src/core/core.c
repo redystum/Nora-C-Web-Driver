@@ -33,7 +33,7 @@ int web_init(web_context *ctx, char *geckodriverPath, char *firefoxPath, int por
           ctx->geckodriverPath, ctx->firefoxPath, ctx->port);
 
     int err = 0;
-    if ((err = gecko_run(ctx, force_kill)) < 0) {
+    if ((err = gecko_run(ctx, force_kill, geckodriverPath == NULL, firefoxPath != NULL)) < 0) {
         DEBUG("Failed to start geckodriver");
         web_free_session(ctx->session);
         return err;
@@ -77,7 +77,6 @@ int web_sleep(int seconds) {
 }
 
 int web_get_timeouts(web_context *ctx, web_timeouts *timeouts) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, timeouts);
 
     cJSON *response_json = NULL;

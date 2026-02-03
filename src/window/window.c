@@ -4,7 +4,6 @@
 #include "communication_internal/communication.h"
 
 int web_get_window_rect(web_context *ctx, web_rect *rect) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, rect);
 
     cJSON *response_json = NULL;
@@ -153,7 +152,6 @@ int web_close_window(web_context *ctx) {
 int web_close_tab(web_context *ctx) { return web_close_window(ctx); }
 
 int web_switch_to_window(web_context *ctx, char *handle) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, handle);
 
     cJSON *response_json = NULL;
@@ -169,7 +167,6 @@ int web_switch_to_tab(web_context *ctx, char *handle) {
 }
 
 int web_get_window_handles(web_context *ctx, char ***handles) {
-    CHECK_NULL(ctx, ctx);
     CHECK_NULL(ctx, handles);
 
     cJSON *response_json = NULL;

@@ -10,7 +10,7 @@
 #include "tests/test_window.h"
 #include "tests/test_navigation.h"
 #include "tests/test_core.h"
-
+#include "tests/test_document.h"
 
 
 int main(int argc, char *argv[]) {
@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
 
     test_navigation(&ctx, RUN_EVERYTHING);
 
-    test_elements(&ctx);
+    test_document(&ctx);
 
     if (!RUN_EVERYTHING) {
         INFO("DONE");
@@ -54,6 +54,8 @@ int main(int argc, char *argv[]) {
         cmdline_parser_free(&args);
         return 0;
     }
+
+    test_elements(&ctx);
 
     test_window_management(&ctx);
 

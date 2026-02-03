@@ -108,7 +108,7 @@ cppcheck:
 	cppcheck --enable=all --verbose --suppress=missingIncludeSystem $(ALL_SRCS) src/*/*.h
 
 run: $(PROGRAM)
-	./$(PROGRAM) -g ./geckodriver/geckodriver -f /opt/firefox/firefox
+	./$(PROGRAM) -g ./geckodriver/geckodriver
 
 all_debugon: debugon all
 
