@@ -6,7 +6,6 @@
 #include "../core/core.h"
 
 /* small buffer wrapper so write_callback can append safely */
-#define RESPONSE_CAP 2048
 typedef struct {
 	char *buf;
 	size_t cap;

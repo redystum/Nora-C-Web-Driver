@@ -3,21 +3,22 @@
 size_t write_callback(void *ptr, size_t size, size_t nmemb, void *userdata) {
     size_t total = size * nmemb;
     web_resp_buf *rb = (web_resp_buf *) userdata;
-    if (!rb || !rb->buf) {
-        return total;
+
+    size_t needed = rb->len + total + 1;
+    if (needed > rb->cap) {
+        size_t new_cap = rb->cap ? rb->cap * 2 : 4096;
+        while (new_cap < needed) new_cap *= 2;
+        char *new_mem = realloc(rb->buf, new_cap);
+        if (!new_mem) return 0; // Trigger CURLE_WRITE_ERROR
+        rb->buf = new_mem;
+        rb->cap = new_cap;
     }
-    /* compute how many bytes we can copy without overflowing (leave room for NUL)
-     */
-    size_t avail = (rb->cap > rb->len) ? (rb->cap - rb->len - 1) : 0;
-    size_t to_copy = total < avail ? total : avail;
-    if (to_copy > 0) {
-        memcpy(rb->buf + rb->len, ptr, to_copy);
-        rb->len += to_copy;
-        rb->buf[rb->len] = '\0';
-    }
-    /* if overflow would have occurred, we simply truncate silently */
-    DEBUG("received %zu bytes, appended %zu bytes, len=%zu",
-          total, to_copy, rb->len);
+
+    memcpy(rb->buf + rb->len, ptr, total);
+    rb->len += total;
+    rb->buf[rb->len] = '\0';
+
+    DEBUG("received %zu bytes, len=%zu", total, rb->len);
     return total;
 }
 
@@ -68,11 +69,7 @@ int run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, we
     }
 
     /* prepare safe response buffer wrapper */
-    char raw_buf[RESPONSE_CAP] = {0};
-    web_resp_buf rb;
-    rb.buf = raw_buf;
-    rb.cap = RESPONSE_CAP;
-    rb.len = 0;
+    web_resp_buf rb = {0};
 
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &rb);
@@ -80,6 +77,10 @@ int run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, we
     long http_code = 0;
     CURLcode res = curl_easy_perform(curl);
     curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code);
+
+    // If buf is NULL (no content), treat as empty string
+    char *body = rb.buf ? rb.buf : "";
+
     if (res != CURLE_OK) {
         DEBUG("curl_easy_perform failed: %s", curl_easy_strerror(res));
         web_error err = {0};
@@ -89,16 +90,17 @@ int run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, we
         err.message = strdup(curl_easy_strerror(res));
         web_set_last_error(ctx, err);
         curl_easy_cleanup(curl);
+        if (rb.buf) free(rb.buf);
         return -1;
     } else {
         DEBUG("request OK, HTTP response code: %ld", http_code);
-        DEBUG("response (truncated): %s", raw_buf);
+        DEBUG("response: %s", body);
 
         if (http_code < 200 || http_code >= 300) {
             DEBUG("HTTP error code %ld received", http_code);
             http_code = -http_code;
             response_json = NULL;
-            cJSON *resp = cJSON_Parse(raw_buf);
+            cJSON *resp = cJSON_Parse(body);
             curl_easy_cleanup(curl);
 
             if (!resp) {
@@ -112,9 +114,10 @@ int run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, we
                 } else {
                     DEBUG("Failed to parse error response JSON");
                     err.error = strdup("Unexpected error");
-                    err.message = strdup(raw_buf);
+                    err.message = strdup(body);
                 }
                 web_set_last_error(ctx, err);
+                if (rb.buf) free(rb.buf);
                 return http_code;
             }
 
@@ -126,15 +129,17 @@ int run_curl(web_context *ctx, char *path, char *data, cJSON **response_json, we
             err.message = strdup(cJSON_GetObjectItemCaseSensitive(error_info, "message")->valuestring);
             web_set_last_error(ctx, err);
             cJSON_Delete(resp);
+            if (rb.buf) free(rb.buf);
             return http_code;
         }
 
         if (response_json) {
-            *response_json = cJSON_Parse(raw_buf);
+            *response_json = cJSON_Parse(body);
         }
         web_reset_last_error(ctx);
     }
     curl_easy_cleanup(curl);
+    if (rb.buf) free(rb.buf);
     return http_code;
 }
 
