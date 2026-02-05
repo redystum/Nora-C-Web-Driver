@@ -3,8 +3,24 @@
 
 #include "../core/core.h"
 
-void web_execute_script(void);
-void web_execute_async_script(void);
+/**
+ * \brief Execute JavaScript in the context of the currently selected frame or element
+ * \param ctx web context
+ * \param script JavaScript code to execute
+ * \param args arguments to pass to the script (as a JSON array)
+ * \param result output result of the script execution (it can be: number, string, array or object)
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
+int web_execute_script_sync(web_context *ctx, const char *script, cJSON *args, cJSON **result);
+/**
+ * \brief Execute JavaScript asynchronously in the context of the currently selected frame or element
+ * \param ctx web context
+ * \param script JavaScript code to execute
+ * \param args arguments to pass to the script (as a JSON array)
+ * \param result output result of the script execution (it can be: number, string, array or object)
+ * \return \b 2xx http code — Success \n\b -xxx http code (negative code) — Failure \n\b -1 — Error
+ */
+int web_execute_script_async(web_context *ctx, const char *script, cJSON *args, cJSON **result);
 void web_dismiss_alert(void);
 void web_accept_alert(void);
 void web_get_alert_text(void);
