@@ -12,3 +12,7 @@ webtest
 
 args.h
 args.c
+build/
+.run/
+docs.md
+**/*.todo

@@ -12,10 +12,15 @@ LDFLAGS=
 IFLAGS=-linux -brs -brf -br
 
 ## Program Definitions
-PROGRAM_NAME=webtest
+PROGRAM_NAME=webdriver
 BUILD_DIR=build
 PROGRAM=$(BUILD_DIR)/$(PROGRAM_NAME)
 PROGRAM_OPT=args
+
+# Library Definitions
+LIB_NAME=libwebdriver
+STATIC_LIB=$(BUILD_DIR)/$(LIB_NAME).a
+SHARED_LIB=$(BUILD_DIR)/$(LIB_NAME).so
 
 # --------------------------------------------------------------------------
 # AUTOMATIC FILE DISCOVERY
@@ -33,9 +38,12 @@ TEST_SRCS := $(wildcard tests/*.c)
 # 4. Combine them
 ALL_SRCS := $(MAIN_SRCS) $(MODULE_SRCS) $(TEST_SRCS)
 
-# 4. Convert .c filenames to .o filenames inside the BUILD_DIR
+# 5. Convert .c filenames to .o filenames inside the BUILD_DIR
 #    Example: src/core/web_core.c -> build/src/core/web_core.o
 PROGRAM_OBJS := $(patsubst %.c, $(BUILD_DIR)/%.o, $(ALL_SRCS))
+
+# 6. Library objects (only module sources, exclude main and args)
+LIB_OBJS := $(patsubst %.c, $(BUILD_DIR)/%.o, $(MODULE_SRCS))
 
 # Ensure args.h is generated before compiling any object file
 $(PROGRAM_OBJS): $(PROGRAM_OPT).h
@@ -44,9 +52,17 @@ $(PROGRAM_OBJS): $(PROGRAM_OPT).h
 # TARGETS
 # --------------------------------------------------------------------------
 
-.PHONY: clean all docs indent debugon
+.PHONY: clean all docs indent debugon optimize lib static shared test_firefox
 
 all: $(PROGRAM)
+
+# Library targets
+lib: static shared
+	@echo "Library build successful: $(STATIC_LIB) $(SHARED_LIB)"
+
+static: $(STATIC_LIB)
+
+shared: $(SHARED_LIB)
 
 # Debug build
 debugon: CFLAGS += -D DEBUG_ENABLED -g
@@ -64,6 +80,18 @@ $(PROGRAM): $(PROGRAM_OBJS)
 	$(CC) -o $@ $(PROGRAM_OBJS) $(LIBS) $(LDFLAGS)
 	@echo "Build successful: $(PROGRAM)"
 
+# Static library target
+$(STATIC_LIB): $(LIB_OBJS)
+	@mkdir -p $(BUILD_DIR)
+	ar rcs $@ $(LIB_OBJS)
+	@echo "Static library built: $@"
+
+# Shared library target
+$(SHARED_LIB): $(LIB_OBJS)
+	@mkdir -p $(BUILD_DIR)
+	$(CC) -shared -fPIC -o $@ $(LIB_OBJS) $(LIBS) $(LDFLAGS)
+	@echo "Shared library built: $@"
+
 # --------------------------------------------------------------------------
 # COMPILATION RULES
 # --------------------------------------------------------------------------
@@ -78,7 +106,7 @@ $(BUILD_DIR)/$(PROGRAM_OPT).o: $(PROGRAM_OPT).c $(PROGRAM_OPT).h
 #    $(dir $@) ensures the folder (e.g., build/src/window/) exists before compiling
 $(BUILD_DIR)/%.o: %.c
 	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
 
 # --------------------------------------------------------------------------
 # UTILITIES
