@@ -3,7 +3,7 @@ LIBS=-lcurl -lcjson #-lm -pthread
 
 # Compiler flags
 # Added -I./src so you can include headers easily (e.g., #include "core/web_core.h")
-CFLAGS=-Wall -Wextra -ggdb -std=c11 -pedantic -D_POSIX_C_SOURCE=200809L -Werror=vla -I./src
+CFLAGS=-Wall -Wextra -ggdb -std=c11 -pedantic -D_POSIX_C_SOURCE=200809L -Werror=vla -I./src -D webdriver -g
 
 # Linker flags
 LDFLAGS=

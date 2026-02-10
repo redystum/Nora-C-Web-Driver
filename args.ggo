@@ -1,4 +1,4 @@
-package "webTester"
+package "webDriver"
 version "1.0"
 
 #----------------------------
@@ -16,8 +16,6 @@ version "1.0"
 #
 # NOTE: support for this file needs to be enabled in 'makefile'
 #
-
-
 
 option "gecko" g "geckodriver path" string typestr="filename" optional default="geckodriver"
 option "firefox" f "firefox path" string typestr="filename" optional default="firefox"

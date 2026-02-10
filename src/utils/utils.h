@@ -2,7 +2,10 @@
 #define UTILS_H
 
 #include <cjson/cJSON.h>
+
+#ifdef webdriver
 #include "core/core.h"
+#endif
 
 /**
  * \brief Prints an error message and aborts the program (PANIC)
@@ -52,6 +55,7 @@
 #define DEBUG_JSON(json);
 #endif
 
+#ifdef webdriver
 /**
  * \brief Checks if the context and parameter are NULL, sets error and returns -1 if so
  * \param ctx   the web context
@@ -71,6 +75,7 @@
         web_set_last_error(ctx, err);                \
         return -1;                                   \
     }
+#endif
 
 /**
  * \brief Initializes the log file
